@@ -16,7 +16,7 @@ interface CurtainMeasurements {
   fullness: number;
   style: 'wave' | 'pencilPleat';
   railType: 'standard' | 'deluxe' | 'motorized';
-  lining: 'standard' | 'blackout' | 'thermal';
+  lining: 'none' | 'standard' | 'blackout' | 'thermal';
 }
 
 interface FabricDetails {
@@ -69,6 +69,7 @@ const RAIL_COSTS = {
 };
 
 const LINING_COSTS = {
+  none: 0,
   standard: 8,
   blackout: 12,
   thermal: 15
@@ -96,7 +97,7 @@ export default function CreateQuotation() {
       fullness: FULLNESS_RATIOS.wave.standard,
       style: 'wave',
       railType: 'standard',
-      lining: 'standard'
+      lining: 'none'
     },
     fabric: {
       name: '',
@@ -272,7 +273,7 @@ export default function CreateQuotation() {
         fullness: FULLNESS_RATIOS.wave.standard,
         style: 'wave',
         railType: 'standard',
-        lining: 'standard'
+        lining: 'none'
       },
       fabric: {
         name: '',
@@ -449,11 +450,12 @@ export default function CreateQuotation() {
                     ...currentItem,
                     measurements: {
                       ...currentItem.measurements,
-                      lining: e.target.value as 'standard' | 'blackout' | 'thermal'
+                      lining: e.target.value as 'none' | 'standard' | 'blackout' | 'thermal'
                     }
                   })}
                   className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
                 >
+                  <option value="none">No Lining</option>
                   <option value="standard">Standard</option>
                   <option value="blackout">Blackout</option>
                   <option value="thermal">Thermal</option>
