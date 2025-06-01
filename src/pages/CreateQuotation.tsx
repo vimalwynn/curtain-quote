@@ -54,6 +54,9 @@ const LINING_COSTS = {
 const LABOR_COST_PER_METER = 15;
 const HOOK_COST = 0.5;
 const TRACK_COST_PER_METER = 25;
+const STITCHING_COST_PER_METER = 8;
+const FIXING_COST_PER_METER = 12;
+const HOOK_SPACING = 0.15; // 15cm spacing between hooks
 
 const mToCm = (meters: number) => Math.round(meters * 100);
 const cmToM = (cm: number) => cm / 100;
@@ -118,6 +121,90 @@ export default function CreateQuotation() {
   const calculateHooksRequired = (width: number, style: 'wave' | 'pencilPleat') => {
     const hooksPerMeter = style === 'wave' ? 6 : 8;
     return Math.ceil(width * hooksPerMeter);
+  };
+
+  const calculatePanels = (width: number, style: 'wave' | 'pencilPleat') => {
+    const maxPanelWidth = 1.5; // Maximum panel width of 150cm
+    return Math.ceil(width / maxPanelWidth);
+  };
+
+  const calculateDetailedBreakdown = (item: QuotationItem) => {
+    const { measurements, fabric, quantity } = item;
+    const { width, height, style, lining } = measurements;
+
+    // Calculate number of panels
+    const numberOfPanels = calculatePanels(width, style);
+    const panelWidth = width / numberOfPanels;
+
+    // Calculate fabric requirements
+    const fullness = FULLNESS_RATIOS[style];
+    const fabricWidth = width * fullness;
+    const fabricHeight = height + 0.3; // Adding 30cm for hems
+    const totalFabricPerCurtain = fabricWidth * fabricHeight;
+    
+    // Calculate pattern matching if applicable
+    let patternMatchingExtra = 0;
+    if (fabric.patternRepeat > 0) {
+      const repeatsNeeded = Math.ceil(fabricHeight / fabric.patternRepeat);
+      patternMatchingExtra = fabric.patternRepeat * (repeatsNeeded - 1) * fabricWidth;
+    }
+
+    // Calculate total fabric including pattern matching
+    const totalFabric = totalFabricPerCurtain + patternMatchingExtra;
+
+    // Calculate track length (same as curtain width)
+    const trackLength = width;
+
+    // Calculate number of hooks
+    const hooksPerPanel = Math.ceil(panelWidth / HOOK_SPACING);
+    const totalHooks = hooksPerPanel * numberOfPanels;
+
+    // Calculate costs
+    const fabricCost = totalFabric * fabric.pricePerMeter;
+    const liningCost = totalFabric * LINING_COSTS[lining];
+    const stitchingCost = totalFabric * STITCHING_COST_PER_METER;
+    const fixingCost = trackLength * FIXING_COST_PER_METER;
+    const trackCost = trackLength * TRACK_COST_PER_METER;
+    const hooksCost = totalHooks * HOOK_COST;
+
+    const subtotal = fabricCost + liningCost + stitchingCost + fixingCost + trackCost + hooksCost;
+    const total = subtotal * quantity;
+
+    return {
+      dimensions: {
+        width: mToCm(width),
+        height: mToCm(height),
+        panelWidth: mToCm(panelWidth)
+      },
+      fabric: {
+        totalMeters: totalFabric.toFixed(2),
+        pricePerMeter: fabric.pricePerMeter,
+        cost: fabricCost
+      },
+      panels: {
+        count: numberOfPanels,
+        fabricPerPanel: (totalFabricPerCurtain / numberOfPanels).toFixed(2)
+      },
+      lining: {
+        type: lining,
+        cost: liningCost
+      },
+      hardware: {
+        trackLength: trackLength.toFixed(2),
+        trackCost,
+        hookCount: totalHooks,
+        hooksCost
+      },
+      labor: {
+        stitching: stitchingCost,
+        fixing: fixingCost
+      },
+      totals: {
+        subtotal,
+        quantity,
+        total
+      }
+    };
   };
 
   useEffect(() => {
@@ -431,38 +518,97 @@ export default function CreateQuotation() {
       <Modal
         isOpen={showCalculationModal}
         onClose={() => setShowCalculationModal(false)}
-        title="Calculation Details"
+        title="Detailed Calculation Breakdown"
       >
         <div className="space-y-6">
           {items.map((item, index) => {
-            const costs = calculateItemCost(item);
+            const breakdown = calculateDetailedBreakdown(item);
             return (
               <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-6 last:border-0">
                 <h3 className="font-semibold text-lg mb-4">{item.fabric.name}</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Fabric Required:</span>
-                    <span>{item.totalFabric.toFixed(2)} meters</span>
+                
+                <div className="space-y-4">
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">Dimensions & Panels</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>Width: {breakdown.dimensions.width}cm</div>
+                      <div>Height: {breakdown.dimensions.height}cm</div>
+                      <div>Number of Panels: {breakdown.panels.count}</div>
+                      <div>Panel Width: {breakdown.dimensions.panelWidth}cm</div>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Fabric Cost:</span>
-                    <span>{formatCurrency(costs.fabricCost)}</span>
+
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">Fabric Requirements</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Total Fabric Required:</span>
+                        <span>{breakdown.fabric.totalMeters} meters</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Fabric per Panel:</span>
+                        <span>{breakdown.panels.fabricPerPanel} meters</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Fabric Cost ({formatCurrency(breakdown.fabric.pricePerMeter)}/m):</span>
+                        <span>{formatCurrency(breakdown.fabric.cost)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Lining Cost:</span>
-                    <span>{formatCurrency(costs.liningCost)}</span>
+
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">Hardware</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Track Length:</span>
+                        <span>{breakdown.hardware.trackLength} meters</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Track Cost:</span>
+                        <span>{formatCurrency(breakdown.hardware.trackCost)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Number of Hooks:</span>
+                        <span>{breakdown.hardware.hookCount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Hooks Cost:</span>
+                        <span>{formatCurrency(breakdown.hardware.hooksCost)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Labor Cost:</span>
-                    <span>{formatCurrency(costs.laborCost)}</span>
+
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2">Labor & Additional Costs</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Stitching Charge:</span>
+                        <span>{formatCurrency(breakdown.labor.stitching)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Fixing Charge:</span>
+                        <span>{formatCurrency(breakdown.labor.fixing)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Lining Cost ({breakdown.lining.type}):</span>
+                        <span>{formatCurrency(breakdown.lining.cost)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Accessories:</span>
-                    <span>{formatCurrency(costs.accessoriesCost)}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold pt-2">
-                    <span>Total (×{item.quantity}):</span>
-                    <span>{formatCurrency(costs.total * item.quantity)}</span>
+
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div className="flex justify-between items-center text-sm">
+                      <span>Subtotal:</span>
+                      <span>{formatCurrency(breakdown.totals.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm mt-1">
+                      <span>Quantity:</span>
+                      <span>×{breakdown.totals.quantity}</span>
+                    </div>
+                    <div className="flex justify-between items-center font-semibold text-lg mt-2">
+                      <span>Total:</span>
+                      <span>{formatCurrency(breakdown.totals.total)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -532,3 +678,5 @@ export default function CreateQuotation() {
     </div>
   );
 }
+
+export default CreateQuotation
