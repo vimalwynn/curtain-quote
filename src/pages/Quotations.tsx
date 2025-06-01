@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import Button from '../components/ui/Button';
 import DataTable from '../components/ui/DataTable';
 import { Plus, Filter, Search, MoreHorizontal, Edit, Trash2, FileText, Download } from 'lucide-react';
+import { formatCurrency } from '../utils/formatCurrency';
 
 interface Quotation {
   id: string;
@@ -72,15 +73,8 @@ export default function Quotations() {
     quote.client.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
   const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('ar-BH', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -256,6 +250,8 @@ export default function Quotations() {
               className="h-10 w-full rounded-md border border-gray-300 bg-white pl-10 pr-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
+          
+          
           
           <div className="flex gap-2 w-full sm:w-auto">
             <Button variant="outline" leftIcon={<Filter className="h-4 w-4" />}>

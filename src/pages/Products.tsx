@@ -3,6 +3,7 @@ import { products } from '../data/mockData';
 import DataTable from '../components/ui/DataTable';
 import Button from '../components/ui/Button';
 import { Package, Plus, Filter, Search, Star, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { formatCurrency } from '../utils/formatCurrency';
 
 export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -11,13 +12,6 @@ export default function Products() {
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(price);
-  };
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -32,7 +26,7 @@ export default function Products() {
     
     if (hasHalfStar) {
       stars.push(
-        <Star key="half\" className="h-4 w-4 text-amber-400" />
+        <Star key="half" className="h-4 w-4 text-amber-400" />
       );
     }
     
@@ -74,7 +68,7 @@ export default function Products() {
       sortable: true,
       render: (product: typeof products[0]) => (
         <span className="font-medium text-gray-900 dark:text-white">
-          {formatPrice(product.price)}
+          {formatCurrency(product.price)}
         </span>
       )
     },

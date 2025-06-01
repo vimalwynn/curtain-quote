@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
+import { formatCurrency } from '../utils/formatCurrency';
 
 interface QuotationItem {
   id: string;
@@ -136,14 +137,14 @@ export default function CreateQuotation() {
                       <input
                         type="number"
                         min="0"
-                        step="0.01"
+                        step="0.001"
                         value={item.price}
                         onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value))}
                         className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       />
                     </div>
-                    <div className="w-24 text-right">
-                      ${(item.quantity * item.price).toFixed(2)}
+                    <div className="w-32 text-right">
+                      {formatCurrency(item.quantity * item.price)}
                     </div>
                     {items.length > 1 && (
                       <button
@@ -179,20 +180,20 @@ export default function CreateQuotation() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    ${calculateSubtotal().toFixed(2)}
+                    {formatCurrency(calculateSubtotal())}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 dark:text-gray-400">Tax (10%)</span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    ${(calculateSubtotal() * 0.1).toFixed(2)}
+                    {formatCurrency(calculateSubtotal() * 0.1)}
                   </span>
                 </div>
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                   <div className="flex justify-between">
                     <span className="text-base font-medium text-gray-900 dark:text-white">Total</span>
                     <span className="text-base font-medium text-gray-900 dark:text-white">
-                      ${calculateTotal().toFixed(2)}
+                      {formatCurrency(calculateTotal())}
                     </span>
                   </div>
                 </div>
