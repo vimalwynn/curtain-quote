@@ -63,6 +63,19 @@ export default function CreateQuotation() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!client.name || !client.email || !validUntil) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Validate items
+    if (items.some(item => !item.description || item.quantity <= 0 || item.price <= 0)) {
+      alert('Please fill in all item details correctly');
+      return;
+    }
+
     const quotation = {
       client,
       items,
@@ -111,24 +124,26 @@ export default function CreateQuotation() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Client Name
+                    Client Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={client.name}
                     onChange={(e) => setClient({ ...client, name: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Email
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
                     value={client.email}
                     onChange={(e) => setClient({ ...client, email: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    required
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -152,9 +167,16 @@ export default function CreateQuotation() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {items.map((item, index) => (
-                  <div key={item.id} className="flex gap-4">
-                    <div className="flex-1">
+                <div className="grid grid-cols-[1fr,100px,120px,120px,40px] gap-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <div>Description</div>
+                  <div>Quantity</div>
+                  <div>Price</div>
+                  <div>Total</div>
+                  <div></div>
+                </div>
+                {items.map((item) => (
+                  <div key={item.id} className="grid grid-cols-[1fr,100px,120px,120px,40px] gap-4 items-center">
+                    <div>
                       <input
                         type="text"
                         placeholder="Item description"
@@ -163,7 +185,7 @@ export default function CreateQuotation() {
                         className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       />
                     </div>
-                    <div className="w-24">
+                    <div>
                       <input
                         type="number"
                         min="1"
@@ -172,7 +194,7 @@ export default function CreateQuotation() {
                         className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       />
                     </div>
-                    <div className="w-32">
+                    <div>
                       <input
                         type="number"
                         min="0"
@@ -182,13 +204,17 @@ export default function CreateQuotation() {
                         className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       />
                     </div>
-                    <div className="w-32 text-right py-2">
+                    <div className="py-2 text-right font-medium text-gray-900 dark:text-white">
                       {formatCurrency(item.quantity * item.price)}
                     </div>
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                      className={cn(
+                        "text-gray-400 hover:text-red-500 dark:hover:text-red-400",
+                        items.length === 1 && "opacity-50 cursor-not-allowed"
+                      )}
                       disabled={items.length === 1}
+                      type="button"
                     >
                       <Trash2 className="h-5 w-5" />
                     </button>
@@ -247,13 +273,14 @@ export default function CreateQuotation() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Valid Until
+                    Valid Until <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
                     value={validUntil}
                     onChange={(e) => setValidUntil(e.target.value)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    required
                   />
                 </div>
                 <div>
