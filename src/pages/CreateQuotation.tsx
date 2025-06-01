@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import Button from '../components/ui/Button';
 import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
+import { cn } from '../utils/cn';
 
 interface QuotationItem {
   id: string;
