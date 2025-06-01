@@ -201,14 +201,14 @@ export default function Quotations() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quotations</h1>
+      <div className="flex items-center space-x-4">
         <Button 
           leftIcon={<Plus className="h-4 w-4" />}
           onClick={() => navigate('/quotations/create')}
         >
           Create Quote
         </Button>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quotations</h1>
       </div>
 
       <Card>
