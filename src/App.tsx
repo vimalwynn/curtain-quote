@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
@@ -20,7 +20,8 @@ function App() {
         setSidebarOpen={setSidebarOpen}
       >
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Navigate to="/quotations/create" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/users" element={<UserManagement />} />
           <Route path="/products" element={<Products />} />
           <Route path="/quotations" element={<Quotations />} />

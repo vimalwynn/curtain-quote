@@ -10,10 +10,11 @@ interface SidebarProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Create Quote', href: '/quotations/create', icon: FileText },
+  { name: 'Quotations', href: '/quotations', icon: FileText },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Products', href: '/products', icon: ShoppingBag },
-  { name: 'Quotations', href: '/quotations', icon: FileText },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
