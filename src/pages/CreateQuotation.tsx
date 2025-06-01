@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import { Calculator, FileText, Plus, Ruler, Dices, AlertCircle } from 'lucide-react';
+import { Calculator, FileText, Plus, Ruler, Dices, AlertCircle, Download, Printer } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 import { products } from '../data/mockData';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const fabrics = products.filter(product => 
   product.category.toLowerCase().includes('fabric')
@@ -88,6 +90,7 @@ export default function CreateQuotation() {
   const [showCalculationModal, setShowCalculationModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const quotationRef = useRef<HTMLDivElement>(null);
   const [currentItem, setCurrentItem] = useState<QuotationItem>({
     roomName: "Window 1",
     measurements: {
@@ -110,6 +113,32 @@ export default function CreateQuotation() {
       tracks: 0
     }
   });
+
+  const generatePDF = async () => {
+    if (!quotationRef.current || items.length === 0) return;
+    
+    const canvas = await html2canvas(quotationRef.current, {
+      scale: 2,
+      backgroundColor: '#ffffff'
+    });
+    
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+    
+    const imgWidth = 210; // A4 width in mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    pdf.save('curtain-quotation.pdf');
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   const calculateFabricRequired = (measurements: CurtainMeasurements) => {
     const { width, height, style, railType } = measurements;
@@ -681,51 +710,88 @@ export default function CreateQuotation() {
         title="Quotation Preview"
       >
         <div className="space-y-6">
-          <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-            <h2 className="text-xl font-bold mb-2">Curtain Quotation</h2>
-            <p className="text-gray-600 dark:text-gray-400">Date: {new Date().toLocaleDateString()}</p>
+          <div className="flex justify-end gap-2 mb-4">
+            <Button
+              variant="outline"
+              onClick={handlePrint}
+              leftIcon={<Printer className="h-4 w-4" />}
+            >
+              Print
+            </Button>
+            <Button
+              onClick={generatePDF}
+              leftIcon={<Download className="h-4 w-4" />}
+            >
+              Download PDF
+            </Button>
           </div>
 
-          <div className="space-y-6">
-            {items.map((item, index) => {
-              const costs = calculateItemCost(item);
-              return (
-                <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold">{item.roomName}</h3>
-                      <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                        <p>Front Layer: {item.frontLayer.name}</p>
-                        {item.secondLayer && <p>Second Layer: {item.secondLayer.name}</p>}
-                        <p>Dimensions: {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm</p>
-                        <p>Style: {item.measurements.style}</p>
-                        <p>Rail Type: {item.measurements.railType}</p>
-                        <p>Lining: {item.measurements.lining}</p>
-                        <p>Quantity: {item.quantity}</p>
-                      </div>
-                    </div>
-                    <p className="font-semibold">{formatCurrency(costs.total * item.quantity)}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-            <div className="flex justify-between items-center text-lg font-bold">
-              <span>Total Amount:</span>
-              <span>{formatCurrency(calculateTotal())}</span>
+          <div ref={quotationRef} className="space-y-6 p-6 bg-white">
+            <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+              <h2 className="text-xl font-bold mb-2">Curtain Quotation</h2>
+              <p className="text-gray-600">Date: {new Date().toLocaleDateString()}</p>
+              <p className="text-gray-600">Quote #: QT-{new Date().getFullYear()}-{String(Math.floor(Math.random() * 1000)).padStart(3, '0')}</p>
             </div>
-          </div>
 
-          <div className="text-sm text-gray-600 dark:text-gray-400 pt-4">
-            <p>Terms and Conditions:</p>
-            <ul className="list-disc pl-5 space-y-1 mt-2">
-              <li>50% deposit required to confirm order</li>
-              <li>Delivery time: 2-3 weeks from confirmation</li>
-              <li>Price includes installation</li>
-              <li>Warranty: 1 year on hardware</li>
-            </ul>
+            <div className="space-y-6">
+              {items.map((item, index) => {
+                const costs = calculateItemCost(item);
+                return (
+                  <div key={index} className="border-b border-gray-200 pb-4 last:border-0">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold">{item.roomName}</h3>
+                        <div className="space-y-1 text-sm text-gray-600">
+                          <p>Front Layer: {item.frontLayer.name}</p>
+                          {item.secondLayer && <p>Second Layer: {item.secondLayer.name}</p>}
+                          <p>Dimensions: {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm</p>
+                          <p>Style: {item.measurements.style}</p>
+                          <p>Rail Type: {item.measurements.railType}</p>
+                          <p>Lining: {item.measurements.lining}</p>
+                          <p>Quantity: {item.quantity}</p>
+                        </div>
+                      </div>
+                      <p className="font-semibold">{formatCurrency(costs.total * item.quantity)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-gray-200 pt-4">
+              <div className="flex justify-between items-center text-lg font-bold">
+                <span>Total Amount:</span>
+                <span>{formatCurrency(calculateTotal())}</span>
+              </div>
+            </div>
+
+            <div className="text-sm text-gray-600 pt-4">
+              <p className="font-semibold mb-2">Terms and Conditions:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>50% deposit required to confirm order</li>
+                <li>Delivery time: 2-3 weeks from confirmation</li>
+                <li>Price includes installation</li>
+                <li>Warranty: 1 year on hardware</li>
+              </ul>
+            </div>
+
+            <div className="mt-8 pt-8 border-t border-gray-200">
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <p className="font-semibold mb-2">Company Details:</p>
+                  <p className="text-sm text-gray-600">Curtain & Blinds Co.</p>
+                  <p className="text-sm text-gray-600">123 Main Street</p>
+                  <p className="text-sm text-gray-600">City, Country</p>
+                  <p className="text-sm text-gray-600">Tel: +1234567890</p>
+                </div>
+                <div>
+                  <p className="font-semibold mb-2">Bank Details:</p>
+                  <p className="text-sm text-gray-600">Bank: National Bank</p>
+                  <p className="text-sm text-gray-600">Account: 1234567890</p>
+                  <p className="text-sm text-gray-600">IBAN: BH00XXXX1234567890</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </Modal>
