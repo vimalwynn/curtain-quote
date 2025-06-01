@@ -203,7 +203,7 @@ export default function CreateQuotation() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="max-w-[1400px] mx-auto space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Curtain Quotation</h1>
         <div className="flex gap-2">
@@ -226,16 +226,16 @@ export default function CreateQuotation() {
       )}
 
       <Card>
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Ruler className="h-5 w-5" />
+        <div className="p-8 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold flex items-center gap-2">
+                <Ruler className="h-6 w-6" />
                 Measurements
               </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Width (meters)
                   </label>
                   <input
@@ -249,11 +249,11 @@ export default function CreateQuotation() {
                         width: parseFloat(e.target.value)
                       }
                     })}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Height (meters)
                   </label>
                   <input
@@ -267,13 +267,13 @@ export default function CreateQuotation() {
                         height: parseFloat(e.target.value)
                       }
                     })}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
                   />
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Style
                 </label>
                 <select
@@ -286,7 +286,7 @@ export default function CreateQuotation() {
                       fullness: FULLNESS_RATIOS[e.target.value as 'wave' | 'pencilPleat']
                     }
                   })}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
                 >
                   <option value="wave">Wave</option>
                   <option value="pencilPleat">Pencil Pleat</option>
@@ -294,7 +294,7 @@ export default function CreateQuotation() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Lining
                 </label>
                 <select
@@ -306,7 +306,7 @@ export default function CreateQuotation() {
                       lining: e.target.value as 'standard' | 'blackout' | 'thermal'
                     }
                   })}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
                 >
                   <option value="standard">Standard</option>
                   <option value="blackout">Blackout</option>
@@ -315,13 +315,13 @@ export default function CreateQuotation() {
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Dices className="h-5 w-5" />
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold flex items-center gap-2">
+                <Dices className="h-6 w-6" />
                 Fabric Details
               </h3>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Fabric Name
                 </label>
                 <input
@@ -334,12 +334,12 @@ export default function CreateQuotation() {
                       name: e.target.value
                     }
                   })}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Price per Meter
                 </label>
                 <input
@@ -353,12 +353,12 @@ export default function CreateQuotation() {
                       pricePerMeter: parseFloat(e.target.value)
                     }
                   })}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Pattern Repeat (meters)
                 </label>
                 <input
@@ -372,12 +372,12 @@ export default function CreateQuotation() {
                       patternRepeat: parseFloat(e.target.value)
                     }
                   })}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Quantity
                 </label>
                 <input
@@ -388,14 +388,18 @@ export default function CreateQuotation() {
                     ...currentItem,
                     quantity: parseInt(e.target.value)
                   })}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <Button onClick={handleAddItem} leftIcon={<Plus className="h-4 w-4" />}>
+          <div className="flex justify-end pt-4">
+            <Button 
+              onClick={handleAddItem} 
+              leftIcon={<Plus className="h-4 w-4" />}
+              size="lg"
+            >
               Add to Quote
             </Button>
           </div>
