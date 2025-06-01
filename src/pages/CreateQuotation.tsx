@@ -118,7 +118,7 @@ export default function CreateQuotation() {
     const { width, height, style, railType } = measurements;
     const fullness = FULLNESS_RATIOS[style][railType];
     const fabricWidth = width * fullness;
-    const totalHeight = height + 0.3; // Adding 30cm for hems and headers
+    const totalHeight = height + 0.3;
     return fabricWidth * totalHeight;
   };
 
@@ -227,9 +227,20 @@ export default function CreateQuotation() {
   }, [currentItem.measurements]);
 
   const handleFabricSelect = (fabricId: string, layer: 'front' | 'second') => {
-    const selectedFabric = fabrics.find(f => f.id === fabricId);
-    if (selectedFabric) {
-      if (layer === 'front') {
+    if (layer === 'front') {
+      if (!fabricId) {
+        setCurrentItem({
+          ...currentItem,
+          frontLayer: {
+            name: '',
+            pricePerMeter: 0
+          }
+        });
+        return;
+      }
+      
+      const selectedFabric = fabrics.find(f => f.id === fabricId);
+      if (selectedFabric) {
         setCurrentItem({
           ...currentItem,
           frontLayer: {
@@ -237,10 +248,21 @@ export default function CreateQuotation() {
             pricePerMeter: selectedFabric.price
           }
         });
-      } else {
+      }
+    } else {
+      if (fabricId === 'none') {
         setCurrentItem({
           ...currentItem,
-          secondLayer: fabricId === 'none' ? null : {
+          secondLayer: null
+        });
+        return;
+      }
+      
+      const selectedFabric = fabrics.find(f => f.id === fabricId);
+      if (selectedFabric) {
+        setCurrentItem({
+          ...currentItem,
+          secondLayer: {
             name: selectedFabric.name,
             pricePerMeter: selectedFabric.price
           }
@@ -491,9 +513,9 @@ export default function CreateQuotation() {
                   Front Layer Fabric
                 </label>
                 <select
-                  value={currentItem.frontLayer.name}
+                  value={currentItem.frontLayer.name ? fabrics.find(f => f.name === currentItem.frontLayer.name)?.id || '' : ''}
                   onChange={(e) => handleFabricSelect(e.target.value, 'front')}
-                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                 >
                   <option value="">Select a fabric</option>
                   {fabrics.map(fabric => (
@@ -509,9 +531,9 @@ export default function CreateQuotation() {
                   Second Layer Fabric (Optional)
                 </label>
                 <select
-                  value={currentItem.secondLayer?.name || 'none'}
+                  value={currentItem.secondLayer ? fabrics.find(f => f.name === currentItem.secondLayer.name)?.id || 'none' : 'none'}
                   onChange={(e) => handleFabricSelect(e.target.value, 'second')}
-                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                 >
                   <option value="none">No second layer</option>
                   {fabrics.map(fabric => (
@@ -727,7 +749,6 @@ export default function CreateQuotation() {
           </div>
 
           <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-            
             <div className="flex justify-between items-center text-lg font-bold">
               <span>Total Amount:</span>
               <span>{formatCurrency(calculateTotal())}</span>
@@ -748,3 +769,5 @@ export default function CreateQuotation() {
     </div>
   );
 }
+
+export default CreateQuotation
