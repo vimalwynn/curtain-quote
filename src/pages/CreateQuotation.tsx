@@ -59,6 +59,7 @@ export default function CreateQuotation() {
   const [items, setItems] = useState<QuotationItem[]>([]);
   const [showCalculationModal, setShowCalculationModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentItem, setCurrentItem] = useState<QuotationItem>({
     measurements: {
@@ -150,14 +151,17 @@ export default function CreateQuotation() {
     return null;
   };
 
-  const handleAddItem = () => {
+  const handleAddToQuote = () => {
     const validationError = validateItem();
     if (validationError) {
       setError(validationError);
-      setTimeout(() => setError(null), 3000); // Clear error after 3 seconds
+      setTimeout(() => setError(null), 3000);
       return;
     }
+    setShowConfirmationModal(true);
+  };
 
+  const handleConfirmAdd = () => {
     setItems([...items, currentItem]);
     setCurrentItem({
       measurements: {
@@ -180,6 +184,7 @@ export default function CreateQuotation() {
         hooks: 0
       }
     });
+    setShowConfirmationModal(false);
     setError(null);
   };
 
@@ -398,7 +403,7 @@ export default function CreateQuotation() {
 
           <div className="flex justify-end pt-4">
             <Button 
-              onClick={handleAddItem} 
+              onClick={handleAddToQuote} 
               leftIcon={<Plus className="h-4 w-4" />}
               size="lg"
             >
@@ -532,6 +537,92 @@ export default function CreateQuotation() {
               <li>Price includes installation</li>
               <li>Warranty: 1 year on hardware</li>
             </ul>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showConfirmationModal}
+        onClose={() => setShowConfirmationModal(false)}
+        title="Confirm Item Details"
+      >
+        <div className="space-y-6">
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <h3 className="font-semibold text-lg mb-4">{currentItem.fabric.name || 'New Item'}</h3>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <h4 className="font-medium mb-2">Measurements</h4>
+                <ul className="space-y-1 text-gray-600 dark:text-gray-400">
+                  <li>Width: {mToCm(currentItem.measurements.width)} cm</li>
+                  <li>Height: {mToCm(currentItem.measurements.height)} cm</li>
+                  <li>Style: {currentItem.measurements.style}</li>
+                  <li>Lining: {currentItem.measurements.lining}</li>
+                  <li>Quantity: {currentItem.quantity}</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-medium mb-2">Fabric Details</h4>
+                <ul className="space-y-1 text-gray-600 dark:text-gray-400">
+                  <li>Price per meter: {formatCurrency(currentItem.fabric.pricePerMeter)}</li>
+                  <li>Pattern repeat: {currentItem.fabric.patternRepeat ? `${mToCm(currentItem.fabric.patternRepeat)} cm` : 'None'}</li>
+                  <li>Total fabric: {currentItem.totalFabric.toFixed(2)} meters</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="font-medium">Cost Breakdown</h4>
+            {(() => {
+              const costs = calculateItemCost(currentItem);
+              return (
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">Fabric Cost</span>
+                    <span className="font-medium">{formatCurrency(costs.fabricCost)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">Lining Cost</span>
+                    <span className="font-medium">{formatCurrency(costs.liningCost)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">Labor Cost</span>
+                    <span className="font-medium">{formatCurrency(costs.laborCost)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Accessories</span>
+                      <ul className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <li>Tracks ({currentItem.accessories.tracks.toFixed(2)}m): {formatCurrency(currentItem.accessories.tracks * TRACK_COST_PER_METER)}</li>
+                        <li>Hooks ({currentItem.accessories.hooks} pcs): {formatCurrency(currentItem.accessories.hooks * HOOK_COST)}</li>
+                      </ul>
+                    </div>
+                    <span className="font-medium">{formatCurrency(costs.accessoriesCost)}</span>
+                  </div>
+                  <div className="flex justify-between pt-2 text-base font-semibold">
+                    <span>Total per unit</span>
+                    <span>{formatCurrency(costs.total)}</span>
+                  </div>
+                  {currentItem.quantity > 1 && (
+                    <div className="flex justify-between pt-2 text-lg font-bold">
+                      <span>Final Total (×{currentItem.quantity})</span>
+                      <span>{formatCurrency(costs.total * currentItem.quantity)}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6">
+            <Button variant="outline" onClick={() => setShowConfirmationModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmAdd}>
+              Confirm Add
+            </Button>
           </div>
         </div>
       </Modal>
