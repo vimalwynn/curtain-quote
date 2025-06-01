@@ -14,9 +14,18 @@ interface QuotationItem {
 
 export default function CreateQuotation() {
   const navigate = useNavigate();
+  const [client, setClient] = useState({
+    name: '',
+    email: '',
+    address: ''
+  });
   const [items, setItems] = useState<QuotationItem[]>([
     { id: '1', description: '', quantity: 1, price: 0 }
   ]);
+  const [validUntil, setValidUntil] = useState('');
+  const [terms, setTerms] = useState(
+    'Payment is due within 30 days from the date of invoice. Late payments are subject to a 5% monthly finance charge.'
+  );
   
   const addItem = () => {
     setItems([
@@ -31,7 +40,9 @@ export default function CreateQuotation() {
   };
 
   const removeItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
+    if (items.length > 1) {
+      setItems(items.filter(item => item.id !== id));
+    }
   };
 
   const updateItem = (id: string, field: keyof QuotationItem, value: string | number) => {
@@ -50,6 +61,25 @@ export default function CreateQuotation() {
     return subtotal + tax;
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const quotation = {
+      client,
+      items,
+      validUntil,
+      terms,
+      subtotal: calculateSubtotal(),
+      tax: calculateSubtotal() * 0.1,
+      total: calculateTotal(),
+      date: new Date().toISOString(),
+      status: 'Draft' as const
+    };
+    
+    // In a real app, this would be an API call
+    console.log('Saving quotation:', quotation);
+    navigate('/quotations');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -63,7 +93,10 @@ export default function CreateQuotation() {
           </Button>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Quotation</h1>
         </div>
-        <Button leftIcon={<Save className="h-4 w-4" />}>
+        <Button 
+          leftIcon={<Save className="h-4 w-4" />}
+          onClick={handleSubmit}
+        >
           Save Quote
         </Button>
       </div>
@@ -82,6 +115,8 @@ export default function CreateQuotation() {
                   </label>
                   <input
                     type="text"
+                    value={client.name}
+                    onChange={(e) => setClient({ ...client, name: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
@@ -91,6 +126,8 @@ export default function CreateQuotation() {
                   </label>
                   <input
                     type="email"
+                    value={client.email}
+                    onChange={(e) => setClient({ ...client, email: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
@@ -100,6 +137,8 @@ export default function CreateQuotation() {
                   </label>
                   <textarea
                     rows={3}
+                    value={client.address}
+                    onChange={(e) => setClient({ ...client, address: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
@@ -129,7 +168,7 @@ export default function CreateQuotation() {
                         type="number"
                         min="1"
                         value={item.quantity}
-                        onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value))}
+                        onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
                         className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       />
                     </div>
@@ -139,21 +178,20 @@ export default function CreateQuotation() {
                         min="0"
                         step="0.001"
                         value={item.price}
-                        onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value))}
+                        onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
                         className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       />
                     </div>
-                    <div className="w-32 text-right">
+                    <div className="w-32 text-right py-2">
                       {formatCurrency(item.quantity * item.price)}
                     </div>
-                    {items.length > 1 && (
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-gray-400 hover:text-red-500 dark:hover:text-red-400"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                      disabled={items.length === 1}
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
                   </div>
                 ))}
                 
@@ -213,6 +251,8 @@ export default function CreateQuotation() {
                   </label>
                   <input
                     type="date"
+                    value={validUntil}
+                    onChange={(e) => setValidUntil(e.target.value)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
@@ -222,8 +262,9 @@ export default function CreateQuotation() {
                   </label>
                   <textarea
                     rows={4}
+                    value={terms}
+                    onChange={(e) => setTerms(e.target.value)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    defaultValue="Payment is due within 30 days from the date of invoice. Late payments are subject to a 5% monthly finance charge."
                   />
                 </div>
               </div>

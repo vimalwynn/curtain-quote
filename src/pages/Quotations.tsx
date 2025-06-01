@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import DataTable from '../components/ui/DataTable';
-import { Plus, Filter, Search, MoreHorizontal, Edit, Trash2, FileText, Download } from 'lucide-react';
+import { Plus, Filter, Search, MoreHorizontal, Edit, Trash2, FileText, Download, Eye } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 
 interface Quotation {
@@ -67,11 +67,18 @@ const mockQuotations: Quotation[] = [
 export default function Quotations() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [quotations, setQuotations] = useState<Quotation[]>(mockQuotations);
   
-  const filteredQuotations = mockQuotations.filter(quote => 
-    quote.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    quote.client.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredQuotations = quotations.filter(quote => {
+    const matchesSearch = 
+      quote.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      quote.client.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || quote.status.toLowerCase() === statusFilter.toLowerCase();
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const formatDate = (dateString: string) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -94,6 +101,10 @@ export default function Quotations() {
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
+  };
+
+  const handleDeleteQuotation = (id: string) => {
+    setQuotations(quotations.filter(quote => quote.id !== id));
   };
 
   const columns = [
@@ -155,13 +166,22 @@ export default function Quotations() {
       header: 'Actions',
       render: (quote: Quotation) => (
         <div className="flex space-x-2">
+          <button 
+            className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+            onClick={() => navigate(`/quotations/${quote.id}`)}
+          >
+            <Eye className="h-4 w-4" />
+          </button>
           <button className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300">
             <Edit className="h-4 w-4" />
           </button>
           <button className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300">
             <Download className="h-4 w-4" />
           </button>
-          <button className="rounded-md p-1 text-gray-500 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/30 dark:hover:text-red-400">
+          <button 
+            className="rounded-md p-1 text-gray-500 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+            onClick={() => handleDeleteQuotation(quote.id)}
+          >
             <Trash2 className="h-4 w-4" />
           </button>
           <button className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300">
@@ -170,6 +190,13 @@ export default function Quotations() {
         </div>
       )
     }
+  ];
+
+  const stats = [
+    { label: 'Total Quotes', value: quotations.length, icon: FileText, color: 'blue' },
+    { label: 'Pending', value: quotations.filter(q => q.status === 'Sent').length, icon: FileText, color: 'amber' },
+    { label: 'Accepted', value: quotations.filter(q => q.status === 'Accepted').length, icon: FileText, color: 'green' },
+    { label: 'Declined', value: quotations.filter(q => q.status === 'Declined').length, icon: FileText, color: 'red' },
   ];
 
   return (
@@ -190,50 +217,19 @@ export default function Quotations() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-              <div className="flex items-center">
-                <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 p-2">
-                  <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Quotes</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">24</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-              <div className="flex items-center">
-                <div className="rounded-full bg-amber-100 dark:bg-amber-900/30 p-2">
-                  <FileText className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">8</p>
+            {stats.map(({ label, value, icon: Icon, color }) => (
+              <div key={label} className="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center">
+                  <div className={`rounded-full bg-${color}-100 dark:bg-${color}-900/30 p-2`}>
+                    <Icon className={`h-5 w-5 text-${color}-600 dark:text-${color}-400`} />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
+                    <p className="text-2xl font-semibold text-gray-900 dark:text-white">{value}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-              <div className="flex items-center">
-                <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-2">
-                  <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Accepted</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">12</p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-              <div className="flex items-center">
-                <div className="rounded-full bg-red-100 dark:bg-red-900/30 p-2">
-                  <FileText className="h-5 w-5 text-red-600 dark:text-red-400" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Declined</p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">4</p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -255,7 +251,11 @@ export default function Quotations() {
             <Button variant="outline" leftIcon={<Filter className="h-4 w-4" />}>
               Filter
             </Button>
-            <select className="h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500">
+            <select
+              className="h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
               <option value="all">All Status</option>
               <option value="draft">Draft</option>
               <option value="sent">Sent</option>
