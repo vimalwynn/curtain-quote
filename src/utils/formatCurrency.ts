@@ -1,5 +1,5 @@
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('ar-BH', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'BHD',
     minimumFractionDigits: 3,

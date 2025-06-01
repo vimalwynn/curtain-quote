@@ -74,7 +74,7 @@ export default function Quotations() {
   );
 
   const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('ar-BH', {
+    return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -250,8 +250,6 @@ export default function Quotations() {
               className="h-10 w-full rounded-md border border-gray-300 bg-white pl-10 pr-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
-          
-          
           
           <div className="flex gap-2 w-full sm:w-auto">
             <Button variant="outline" leftIcon={<Filter className="h-4 w-4" />}>
