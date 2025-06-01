@@ -734,8 +734,7 @@ export default function CreateQuotation() {
                       <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                         <p>Front Layer: {item.frontLayer.name}</p>
                         {item.secondLayer && <p>Second Layer: {item.secondLayer.name}</p>}
-                        <p>Dimensions: {mToCm(item.measurements.width)}cm × {mT
-oCm(item.measurements.height)}cm</p>
+                        <p>Dimensions: {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm</p>
                         <p>Style: {item.measurements.style}</p>
                         <p>Rail Type: {item.measurements.railType}</p>
                         <p>Lining: {item.measurements.lining}</p>
