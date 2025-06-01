@@ -2,16 +2,58 @@ import { useState } from 'react';
 import { products } from '../data/mockData';
 import DataTable from '../components/ui/DataTable';
 import Button from '../components/ui/Button';
-import { Package, Plus, Filter, Search, Star, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import Modal from '../components/ui/Modal';
+import { Package, Plus, Filter, Search, Star, MoreHorizontal, Edit, Trash2, Save } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
+
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  stock: number;
+  rating: number;
+}
 
 export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [productList, setProductList] = useState<Product[]>(products);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState('all');
   
-  const filteredProducts = products.filter(product => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const categories = Array.from(new Set(products.map(p => p.category)));
+
+  const filteredProducts = productList.filter(product => {
+    const matchesSearch = 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct({ ...product });
+    setShowEditModal(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this product?')) {
+      setProductList(productList.filter(p => p.id !== id));
+    }
+  };
+
+  const handleSave = () => {
+    if (!editingProduct) return;
+
+    setProductList(productList.map(p => 
+      p.id === editingProduct.id ? editingProduct : p
+    ));
+    setShowEditModal(false);
+    setEditingProduct(null);
+  };
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -26,7 +68,7 @@ export default function Products() {
     
     if (hasHalfStar) {
       stars.push(
-        <Star key="half\" className="h-4 w-4 text-amber-400" />
+        <Star key="half" className="h-4 w-4 text-amber-400" />
       );
     }
     
@@ -50,7 +92,7 @@ export default function Products() {
       key: 'name', 
       header: 'Product', 
       sortable: true,
-      render: (product: typeof products[0]) => (
+      render: (product: Product) => (
         <div className="flex items-center">
           <div className="h-10 w-10 flex-shrink-0 rounded-md bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
             <Package className="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -66,7 +108,7 @@ export default function Products() {
       key: 'price', 
       header: 'Price', 
       sortable: true,
-      render: (product: typeof products[0]) => (
+      render: (product: Product) => (
         <span className="font-medium text-gray-900 dark:text-white">
           {formatCurrency(product.price)}
         </span>
@@ -76,7 +118,7 @@ export default function Products() {
       key: 'stock', 
       header: 'Stock', 
       sortable: true,
-      render: (product: typeof products[0]) => (
+      render: (product: Product) => (
         <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
           product.stock > 20
             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
@@ -92,17 +134,23 @@ export default function Products() {
       key: 'rating', 
       header: 'Rating', 
       sortable: true,
-      render: (product: typeof products[0]) => renderStars(product.rating)
+      render: (product: Product) => renderStars(product.rating)
     },
     { 
       key: 'actions', 
       header: 'Actions',
-      render: (product: typeof products[0]) => (
+      render: (product: Product) => (
         <div className="flex space-x-2">
-          <button className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300">
+          <button 
+            className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+            onClick={() => handleEdit(product)}
+          >
             <Edit className="h-4 w-4" />
           </button>
-          <button className="rounded-md p-1 text-gray-500 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/30 dark:hover:text-red-400">
+          <button 
+            className="rounded-md p-1 text-gray-500 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+            onClick={() => handleDelete(product.id)}
+          >
             <Trash2 className="h-4 w-4" />
           </button>
           <button className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300">
@@ -139,13 +187,15 @@ export default function Products() {
             <Button variant="outline" leftIcon={<Filter className="h-4 w-4" />}>
               Filter
             </Button>
-            <select className="h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500"
+            >
               <option value="all">All Categories</option>
-              <option value="electronics">Electronics</option>
-              <option value="audio">Audio</option>
-              <option value="wearables">Wearables</option>
-              <option value="accessories">Accessories</option>
-              <option value="storage">Storage</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -157,6 +207,104 @@ export default function Products() {
           zebra={true}
         />
       </div>
+
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingProduct(null);
+        }}
+        title="Edit Product"
+      >
+        {editingProduct && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Product Name
+              </label>
+              <input
+                type="text"
+                value={editingProduct.name}
+                onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Category
+              </label>
+              <select
+                value={editingProduct.category}
+                onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              >
+                {categories.map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Price
+              </label>
+              <input
+                type="number"
+                step="0.001"
+                value={editingProduct.price}
+                onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Stock
+              </label>
+              <input
+                type="number"
+                value={editingProduct.stock}
+                onChange={(e) => setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value) })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Rating
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                value={editingProduct.rating}
+                onChange={(e) => setEditingProduct({ ...editingProduct, rating: parseFloat(e.target.value) })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingProduct(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                leftIcon={<Save className="h-4 w-4" />}
+                onClick={handleSave}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
