@@ -26,7 +26,7 @@ export default function Products() {
     
     if (hasHalfStar) {
       stars.push(
-        <Star key="half" className="h-4 w-4 text-amber-400" />
+        <Star key="half\" className="h-4 w-4 text-amber-400" />
       );
     }
     
