@@ -14,16 +14,16 @@ export const users = [
 
 // Product data
 export const products = [
-  { id: '1', name: 'Premium Laptop', category: 'Electronics', price: 1299.99, stock: 23, rating: 4.5 },
-  { id: '2', name: 'Wireless Headphones', category: 'Audio', price: 199.99, stock: 45, rating: 4.2 },
-  { id: '3', name: 'Smart Watch', category: 'Wearables', price: 249.99, stock: 18, rating: 4.0 },
-  { id: '4', name: 'Ultra HD Monitor', category: 'Electronics', price: 349.99, stock: 12, rating: 4.7 },
-  { id: '5', name: 'Bluetooth Speaker', category: 'Audio', price: 89.99, stock: 34, rating: 4.1 },
-  { id: '6', name: 'Mechanical Keyboard', category: 'Accessories', price: 129.99, stock: 28, rating: 4.6 },
-  { id: '7', name: 'Wireless Mouse', category: 'Accessories', price: 59.99, stock: 42, rating: 4.3 },
-  { id: '8', name: 'External SSD', category: 'Storage', price: 179.99, stock: 15, rating: 4.8 },
-  { id: '9', name: 'Graphic Tablet', category: 'Accessories', price: 199.99, stock: 9, rating: 4.4 },
-  { id: '10', name: 'Webcam HD', category: 'Accessories', price: 79.99, stock: 31, rating: 4.2 },
+  { id: '1', name: 'Premium Silk Fabric', category: 'Fabric', price: 45.99, stock: 150, rating: 4.8 },
+  { id: '2', name: 'Luxury Velvet Fabric', category: 'Fabric', price: 55.99, stock: 120, rating: 4.9 },
+  { id: '3', name: 'Cotton Blend Fabric', category: 'Fabric', price: 25.99, stock: 200, rating: 4.5 },
+  { id: '4', name: 'Linen Fabric', category: 'Fabric', price: 35.99, stock: 180, rating: 4.6 },
+  { id: '5', name: 'Blackout Fabric', category: 'Fabric', price: 42.99, stock: 160, rating: 4.7 },
+  { id: '6', name: 'Sheer Fabric', category: 'Fabric', price: 28.99, stock: 190, rating: 4.4 },
+  { id: '7', name: 'Premium Curtain Track', category: 'Hardware', price: 89.99, stock: 75, rating: 4.8 },
+  { id: '8', name: 'Curtain Hooks (50pc)', category: 'Hardware', price: 15.99, stock: 200, rating: 4.5 },
+  { id: '9', name: 'Curtain Rings (20pc)', category: 'Hardware', price: 19.99, stock: 150, rating: 4.6 },
+  { id: '10', name: 'Curtain Rod Set', category: 'Hardware', price: 79.99, stock: 100, rating: 4.7 },
 ];
 
 // Dashboard statistics

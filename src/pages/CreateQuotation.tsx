@@ -4,6 +4,11 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { Calculator, FileText, Plus, Ruler, Dices, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
+import { products } from '../data/mockData';
+
+const fabrics = products.filter(product => 
+  product.category.toLowerCase().includes('fabric')
+);
 
 interface CurtainMeasurements {
   width: number; // stored in meters
@@ -50,16 +55,13 @@ const LABOR_COST_PER_METER = 15;
 const HOOK_COST = 0.5;
 const TRACK_COST_PER_METER = 25;
 
-// Convert meters to centimeters
 const mToCm = (meters: number) => Math.round(meters * 100);
-// Convert centimeters to meters
 const cmToM = (cm: number) => cm / 100;
 
 export default function CreateQuotation() {
   const [items, setItems] = useState<QuotationItem[]>([]);
   const [showCalculationModal, setShowCalculationModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentItem, setCurrentItem] = useState<QuotationItem>({
     measurements: {
@@ -83,23 +85,33 @@ export default function CreateQuotation() {
     }
   });
 
+  const handleFabricSelect = (fabricId: string) => {
+    const selectedFabric = fabrics.find(f => f.id === fabricId);
+    if (selectedFabric) {
+      setCurrentItem({
+        ...currentItem,
+        fabric: {
+          name: selectedFabric.name,
+          pricePerMeter: selectedFabric.price,
+          patternRepeat: 0
+        }
+      });
+    }
+  };
+
   const calculateFabricRequired = (measurements: CurtainMeasurements, patternRepeat: number) => {
     const { width, height, style } = measurements;
     const fullness = FULLNESS_RATIOS[style];
     
-    // Calculate basic fabric requirement
     let fabricWidth = width * fullness;
     
-    // Add extra for pattern matching if there's a pattern repeat
     if (patternRepeat > 0) {
       const repeatsNeeded = Math.ceil(height / patternRepeat);
       height += patternRepeat * (repeatsNeeded - 1);
     }
     
-    // Add extra for hems and headers
-    const totalHeight = height + 0.3; // 30cm extra for hems and header
+    const totalHeight = height + 0.3;
     
-    // Calculate total fabric needed in square meters
     return (fabricWidth * totalHeight);
   };
 
@@ -151,17 +163,14 @@ export default function CreateQuotation() {
     return null;
   };
 
-  const handleAddToQuote = () => {
+  const handleAddItem = () => {
     const validationError = validateItem();
     if (validationError) {
       setError(validationError);
       setTimeout(() => setError(null), 3000);
       return;
     }
-    setShowConfirmationModal(true);
-  };
 
-  const handleConfirmAdd = () => {
     setItems([...items, currentItem]);
     setCurrentItem({
       measurements: {
@@ -184,7 +193,6 @@ export default function CreateQuotation() {
         hooks: 0
       }
     });
-    setShowConfirmationModal(false);
     setError(null);
   };
 
@@ -330,39 +338,20 @@ export default function CreateQuotation() {
               </h3>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Fabric Name
+                  Select Fabric
                 </label>
-                <input
-                  type="text"
+                <select
                   value={currentItem.fabric.name}
-                  onChange={(e) => setCurrentItem({
-                    ...currentItem,
-                    fabric: {
-                      ...currentItem.fabric,
-                      name: e.target.value
-                    }
-                  })}
+                  onChange={(e) => handleFabricSelect(e.target.value)}
                   className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Price per Meter
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={currentItem.fabric.pricePerMeter || ''}
-                  onChange={(e) => setCurrentItem({
-                    ...currentItem,
-                    fabric: {
-                      ...currentItem.fabric,
-                      pricePerMeter: parseFloat(e.target.value)
-                    }
-                  })}
-                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
-                />
+                >
+                  <option value="">Select a fabric</option>
+                  {fabrics.map(fabric => (
+                    <option key={fabric.id} value={fabric.id}>
+                      {fabric.name} - {formatCurrency(fabric.price)} per meter
+                    </option>
+                  ))}
+                </select>
               </div>
               
               <div>
@@ -403,7 +392,7 @@ export default function CreateQuotation() {
 
           <div className="flex justify-end pt-4">
             <Button 
-              onClick={handleAddToQuote} 
+              onClick={handleAddItem} 
               leftIcon={<Plus className="h-4 w-4" />}
               size="lg"
             >
@@ -537,92 +526,6 @@ export default function CreateQuotation() {
               <li>Price includes installation</li>
               <li>Warranty: 1 year on hardware</li>
             </ul>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={showConfirmationModal}
-        onClose={() => setShowConfirmationModal(false)}
-        title="Confirm Item Details"
-      >
-        <div className="space-y-6">
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-            <h3 className="font-semibold text-lg mb-4">{currentItem.fabric.name || 'New Item'}</h3>
-            
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <h4 className="font-medium mb-2">Measurements</h4>
-                <ul className="space-y-1 text-gray-600 dark:text-gray-400">
-                  <li>Width: {mToCm(currentItem.measurements.width)} cm</li>
-                  <li>Height: {mToCm(currentItem.measurements.height)} cm</li>
-                  <li>Style: {currentItem.measurements.style}</li>
-                  <li>Lining: {currentItem.measurements.lining}</li>
-                  <li>Quantity: {currentItem.quantity}</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h4 className="font-medium mb-2">Fabric Details</h4>
-                <ul className="space-y-1 text-gray-600 dark:text-gray-400">
-                  <li>Price per meter: {formatCurrency(currentItem.fabric.pricePerMeter)}</li>
-                  <li>Pattern repeat: {currentItem.fabric.patternRepeat ? `${mToCm(currentItem.fabric.patternRepeat)} cm` : 'None'}</li>
-                  <li>Total fabric: {currentItem.totalFabric.toFixed(2)} meters</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h4 className="font-medium">Cost Breakdown</h4>
-            {(() => {
-              const costs = calculateItemCost(currentItem);
-              return (
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-gray-600 dark:text-gray-400">Fabric Cost</span>
-                    <span className="font-medium">{formatCurrency(costs.fabricCost)}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-gray-600 dark:text-gray-400">Lining Cost</span>
-                    <span className="font-medium">{formatCurrency(costs.liningCost)}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-gray-600 dark:text-gray-400">Labor Cost</span>
-                    <span className="font-medium">{formatCurrency(costs.laborCost)}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">Accessories</span>
-                      <ul className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        <li>Tracks ({currentItem.accessories.tracks.toFixed(2)}m): {formatCurrency(currentItem.accessories.tracks * TRACK_COST_PER_METER)}</li>
-                        <li>Hooks ({currentItem.accessories.hooks} pcs): {formatCurrency(currentItem.accessories.hooks * HOOK_COST)}</li>
-                      </ul>
-                    </div>
-                    <span className="font-medium">{formatCurrency(costs.accessoriesCost)}</span>
-                  </div>
-                  <div className="flex justify-between pt-2 text-base font-semibold">
-                    <span>Total per unit</span>
-                    <span>{formatCurrency(costs.total)}</span>
-                  </div>
-                  {currentItem.quantity > 1 && (
-                    <div className="flex justify-between pt-2 text-lg font-bold">
-                      <span>Final Total (×{currentItem.quantity})</span>
-                      <span>{formatCurrency(costs.total * currentItem.quantity)}</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
-
-          <div className="flex justify-end gap-3 mt-6">
-            <Button variant="outline" onClick={() => setShowConfirmationModal(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmAdd}>
-              Confirm Add
-            </Button>
           </div>
         </div>
       </Modal>
