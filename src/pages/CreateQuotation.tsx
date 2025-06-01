@@ -228,12 +228,12 @@ export default function CreateQuotation() {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
-                <div>
+                <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Address
                   </label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={client.address}
                     onChange={(e) => setClient({ ...client, address: e.target.value })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
