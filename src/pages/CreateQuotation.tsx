@@ -170,7 +170,7 @@ export default function CreateQuotation() {
               <CardTitle>Client Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Client Name <span className="text-red-500">*</span>
@@ -228,7 +228,7 @@ export default function CreateQuotation() {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
-                <div className="sm:col-span-2">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Address
                   </label>
