@@ -2,9 +2,30 @@ import { useState, Fragment } from 'react';
 import { Menu, Transition } from '@headlessui/react';
 import { User, Settings, HelpCircle, LogOut } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { useNavigate } from 'react-router-dom';
 
 export default function UserMenu() {
+  const navigate = useNavigate();
   const [userImage] = useState('https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&dpr=2');
+
+  const handleLogout = () => {
+    // Add logout logic here
+    console.log('Logging out...');
+  };
+
+  const handleProfileClick = () => {
+    // Navigate to profile page
+    console.log('Navigating to profile...');
+  };
+
+  const handleSettingsClick = () => {
+    navigate('/settings');
+  };
+
+  const handleSupportClick = () => {
+    // Open support dialog or navigate to support page
+    console.log('Opening support...');
+  };
 
   return (
     <Menu as="div" className="relative">
@@ -37,58 +58,58 @@ export default function UserMenu() {
           </div>
           <Menu.Item>
             {({ active }) => (
-              <a
-                href="#"
+              <button
+                onClick={handleProfileClick}
                 className={cn(
                   active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                  'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                  'flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
                 )}
               >
                 <User className="mr-3 h-4 w-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
                 Your Profile
-              </a>
+              </button>
             )}
           </Menu.Item>
           <Menu.Item>
             {({ active }) => (
-              <a
-                href="#"
+              <button
+                onClick={handleSettingsClick}
                 className={cn(
                   active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                  'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                  'flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
                 )}
               >
                 <Settings className="mr-3 h-4 w-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
                 Settings
-              </a>
+              </button>
             )}
           </Menu.Item>
           <Menu.Item>
             {({ active }) => (
-              <a
-                href="#"
+              <button
+                onClick={handleSupportClick}
                 className={cn(
                   active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                  'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                  'flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
                 )}
               >
                 <HelpCircle className="mr-3 h-4 w-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
                 Support
-              </a>
+              </button>
             )}
           </Menu.Item>
           <Menu.Item>
             {({ active }) => (
-              <a
-                href="#"
+              <button
+                onClick={handleLogout}
                 className={cn(
                   active ? 'bg-gray-100 dark:bg-gray-700' : '',
-                  'flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                  'flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
                 )}
               >
                 <LogOut className="mr-3 h-4 w-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
                 Sign out
-              </a>
+              </button>
             )}
           </Menu.Item>
         </Menu.Items>
