@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { Plus, Trash2, Save, ArrowLeft, Calculator } from 'lucide-react';
+import Modal from '../components/ui/Modal';
+import { Plus, Trash2, Save, ArrowLeft, Calculator, Eye } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 import { cn } from '../utils/cn';
 
@@ -82,7 +83,9 @@ export default function CreateQuotation() {
   const [terms, setTerms] = useState(
     '1. 50% advance payment required to confirm the order.\n2. Delivery time: 2-3 weeks after confirmation.\n3. Installation included in the quoted price.\n4. Warranty: 1 year on installation and hardware.'
   );
-  
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
   const addItem = () => {
     setItems([
       ...items,
@@ -135,6 +138,35 @@ export default function CreateQuotation() {
 
   const calculateTotal = () => {
     return calculateSubtotal();
+  };
+
+  const calculateAreaWithFold = (item: QuotationItem) => {
+    const baseArea = (item.width * item.height) / 10000; // Convert to square meters
+    const foldMultiplier = parseFloat(item.fold);
+    return baseArea * foldMultiplier;
+  };
+
+  const calculateItemTotalWithExtras = (item: QuotationItem) => {
+    const areaWithFold = calculateAreaWithFold(item);
+    let total = item.rate * areaWithFold * item.quantity;
+
+    // Add extra costs based on options
+    if (item.lining) total += areaWithFold * 5; // Example: 5 BHD per m² for lining
+    if (item.blackout) total += areaWithFold * 8; // Example: 8 BHD per m² for blackout
+    if (item.chiffon) total += areaWithFold * 3; // Example: 3 BHD per m² for chiffon
+    if (item.tieBack) total += 15; // Example: 15 BHD per tie back set
+
+    // Add track costs
+    switch (item.track) {
+      case 'Double Track':
+        total += item.width * 0.02; // Example: 0.02 BHD per cm
+        break;
+      case 'Triple Track':
+        total += item.width * 0.03; // Example: 0.03 BHD per cm
+        break;
+    }
+
+    return total;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -638,12 +670,179 @@ export default function CreateQuotation() {
                   variant="outline"
                   className="w-full justify-start"
                   leftIcon={<Calculator className="h-4 w-4" />}
+                  onClick={() => setShowCalculator(true)}
                 >
-                  Calculate Area
+                  Calculate Quote Details
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  leftIcon={<Eye className="h-4 w-4" />}
+                  onClick={() => setShowPreview(true)}
+                >
+                  Preview Quote
                 </Button>
               </div>
             </CardContent>
           </Card>
+
+          {/* Calculator Modal */}
+          <Modal
+            isOpen={showCalculator}
+            onClose={() => setShowCalculator(false)}
+            title="Quote Calculation Details"
+          >
+            <div className="space-y-4">
+              {items.map((item) => (
+                <div key={item.id} className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                    Item #{item.slNo} - {item.room} ({item.description})
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400">Base Area</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {((item.width * item.height) / 10000).toFixed(2)} m²
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400">Area with Fold ({item.fold})</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {calculateAreaWithFold(item).toFixed(2)} m²
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400">Base Cost</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {formatCurrency(item.rate * calculateAreaWithFold(item))}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400">Total with Options</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {formatCurrency(calculateItemTotalWithExtras(item))}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Selected Options: {[
+                      item.lining && 'Lining',
+                      item.blackout && 'Blackout',
+                      item.chiffon && 'Chiffon',
+                      item.tieBack && 'Tie Back'
+                    ].filter(Boolean).join(', ')}
+                  </div>
+                </div>
+              ))}
+              <div className="pt-4">
+                <div className="flex justify-between text-lg font-medium">
+                  <span>Total Quote Amount</span>
+                  <span>{formatCurrency(items.reduce((sum, item) => sum + calculateItemTotalWithExtras(item), 0))}</span>
+                </div>
+              </div>
+            </div>
+          </Modal>
+
+          {/* Preview Modal */}
+          <Modal
+            isOpen={showPreview}
+            onClose={() => setShowPreview(false)}
+            title="Quote Preview"
+          >
+            <div className="space-y-6">
+              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                <div className="flex justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{client.company}</h3>
+                    <p className="text-gray-500 dark:text-gray-400">{client.address}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-900 dark:text-white font-medium">{quoteNumber}</p>
+                    <p className="text-gray-500 dark:text-gray-400">Valid until: {validUntil}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 dark:text-white">Curtain Specifications</h4>
+                {items.map((item) => (
+                  <div key={item.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Room</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{item.room}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Description</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{item.description}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Dimensions</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {item.width}cm × {item.height}cm
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Fabric</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{item.fabricCode}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Style</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {item.style} ({item.fold} fold)
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Track</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {item.track} ({item.trackColor})
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex justify-between text-sm">
+                      <div className="space-x-2">
+                        {item.chiffon && (
+                          <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                            Chiffon
+                          </span>
+                        )}
+                        {item.lining && (
+                          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            Lining
+                          </span>
+                        )}
+                        {item.blackout && (
+                          <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                            Blackout
+                          </span>
+                        )}
+                        {item.tieBack && (
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                            Tie Back
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {formatCurrency(calculateItemTotalWithExtras(item))}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <div className="flex justify-between text-lg font-medium">
+                  <span>Total Amount</span>
+                  <span>{formatCurrency(items.reduce((sum, item) => sum + calculateItemTotalWithExtras(item), 0))}</span>
+                </div>
+                <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                  <p className="font-medium">Terms & Conditions</p>
+                  <p className="whitespace-pre-line">{terms}</p>
+                </div>
+              </div>
+            </div>
+          </Modal>
         </div>
       </div>
     </div>
