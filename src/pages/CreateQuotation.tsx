@@ -31,9 +31,13 @@ interface QuotationItem {
   };
 }
 
+const DEFAULT_WIDTH = 3; // 300cm = 3m
+const DEFAULT_HEIGHT = 3; // 300cm = 3m
+const DEFAULT_FULLNESS = 3;
+
 const FULLNESS_RATIOS = {
-  wave: 2.5,
-  pencilPleat: 2.2
+  wave: DEFAULT_FULLNESS,
+  pencilPleat: DEFAULT_FULLNESS
 };
 
 const LINING_COSTS = {
@@ -52,9 +56,9 @@ export default function CreateQuotation() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [currentItem, setCurrentItem] = useState<QuotationItem>({
     measurements: {
-      width: 0,
-      height: 0,
-      fullness: 2.5,
+      width: DEFAULT_WIDTH,
+      height: DEFAULT_HEIGHT,
+      fullness: DEFAULT_FULLNESS,
       style: 'wave',
       lining: 'standard'
     },
@@ -126,9 +130,9 @@ export default function CreateQuotation() {
       setItems([...items, currentItem]);
       setCurrentItem({
         measurements: {
-          width: 0,
-          height: 0,
-          fullness: 2.5,
+          width: DEFAULT_WIDTH,
+          height: DEFAULT_HEIGHT,
+          fullness: DEFAULT_FULLNESS,
           style: 'wave',
           lining: 'standard'
         },
