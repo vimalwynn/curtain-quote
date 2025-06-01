@@ -727,6 +727,7 @@ export default function CreateQuotation() {
           </div>
 
           <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+            
             <div className="flex justify-between items-center text-lg font-bold">
               <span>Total Amount:</span>
               <span>{formatCurrency(calculateTotal())}</span>
@@ -747,5 +748,3 @@ export default function CreateQuotation() {
     </div>
   );
 }
-
-export default CreateQuotation
