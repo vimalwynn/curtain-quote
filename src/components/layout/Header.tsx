@@ -1,4 +1,4 @@
-import { Bell, Search, Menu } from 'lucide-react';
+import { Bell, Search, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import UserMenu from './UserMenu';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -6,9 +6,10 @@ import NotificationPanel from './NotificationPanel';
 
 interface HeaderProps {
   setSidebarOpen: (open: boolean) => void;
+  sidebarOpen: boolean;
 }
 
-export default function Header({ setSidebarOpen }: HeaderProps) {
+export default function Header({ setSidebarOpen, sidebarOpen }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   
   return (
@@ -20,6 +21,19 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
       >
         <span className="sr-only">Open sidebar</span>
         <Menu className="h-6 w-6" aria-hidden="true" />
+      </button>
+
+      <button
+        type="button"
+        className="hidden lg:block -m-2.5 p-2.5 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        <span className="sr-only">{sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}</span>
+        {sidebarOpen ? (
+          <ChevronLeft className="h-6 w-6" aria-hidden="true" />
+        ) : (
+          <ChevronRight className="h-6 w-6" aria-hidden="true" />
+        )}
       </button>
 
       <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">

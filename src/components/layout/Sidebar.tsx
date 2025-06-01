@@ -67,7 +67,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
                       <X className="h-6 w-6" aria-hidden="true" />
                     </button>
                   </div>
-                  <SidebarContent />
+                  <SidebarContent expanded={true} />
                 </div>
               </Dialog.Panel>
             </Transition.Child>
@@ -76,19 +76,29 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
       </Transition.Root>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex h-full flex-col overflow-y-auto bg-white dark:bg-gray-950 px-6 pb-4 pt-5 border-r border-gray-200 dark:border-gray-800">
-          <div className="flex items-center mb-8">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h2>
+      <div className={cn(
+        "hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col",
+        open ? "lg:w-64" : "lg:w-20"
+      )}>
+        <div className={cn(
+          "flex h-full flex-col overflow-y-auto bg-white dark:bg-gray-950 pb-4 pt-5 border-r border-gray-200 dark:border-gray-800 transition-all duration-300",
+          open ? "px-6" : "px-2"
+        )}>
+          <div className={cn(
+            "flex items-center mb-8",
+            open ? "justify-between" : "justify-center"
+          )}>
+            {open && <h2 className="text-xl font-bold text-gray-900 dark:text-white">Admin</h2>}
+            {!open && <LayoutDashboard className="h-8 w-8 text-gray-900 dark:text-white" />}
           </div>
-          <SidebarContent />
+          <SidebarContent expanded={open} />
         </div>
       </div>
     </>
   );
 }
 
-function SidebarContent() {
+function SidebarContent({ expanded }: { expanded: boolean }) {
   const location = useLocation();
   
   return (
@@ -104,7 +114,8 @@ function SidebarContent() {
                     location.pathname === item.href
                       ? 'bg-gray-100 text-blue-600 dark:bg-gray-800 dark:text-blue-400'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-blue-600 dark:hover:text-blue-400',
-                    'group flex gap-x-3 rounded-md p-2 text-sm font-medium transition-all'
+                    'group flex gap-x-3 rounded-md p-2 text-sm font-medium transition-all',
+                    !expanded && 'justify-center'
                   )}
                 >
                   <item.icon
@@ -116,7 +127,7 @@ function SidebarContent() {
                     )}
                     aria-hidden="true"
                   />
-                  {item.name}
+                  {expanded && item.name}
                 </Link>
               </li>
             ))}
@@ -125,10 +136,13 @@ function SidebarContent() {
         <li className="mt-auto">
           <Link
             to="#"
-            className="group flex gap-x-3 rounded-md p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400"
+            className={cn(
+              "group flex gap-x-3 rounded-md p-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400",
+              !expanded && 'justify-center'
+            )}
           >
             <LogOut className="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400" aria-hidden="true" />
-            Logout
+            {expanded && 'Logout'}
           </Link>
         </li>
       </ul>
