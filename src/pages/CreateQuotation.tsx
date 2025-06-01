@@ -27,7 +27,8 @@ interface FabricDetails {
 interface QuotationItem {
   roomName: string;
   measurements: CurtainMeasurements;
-  fabric: FabricDetails;
+  frontLayer: FabricDetails;
+  secondLayer: FabricDetails | null;
   quantity: number;
   totalFabric: number;
   laborCost: number;
@@ -99,10 +100,11 @@ export default function CreateQuotation() {
       railType: 'standard',
       lining: 'none'
     },
-    fabric: {
+    frontLayer: {
       name: '',
       pricePerMeter: 0
     },
+    secondLayer: null,
     quantity: 1,
     totalFabric: 0,
     laborCost: 0,
@@ -138,7 +140,7 @@ export default function CreateQuotation() {
   };
 
   const calculateDetailedBreakdown = (item: QuotationItem) => {
-    const { measurements, fabric, quantity } = item;
+    const { measurements, frontLayer, secondLayer, quantity } = item;
     const { width, height, style, railType, lining } = measurements;
 
     const numberOfPanels = calculatePanels(width);
@@ -153,14 +155,15 @@ export default function CreateQuotation() {
     const trackLength = width;
     const totalHooks = calculateHooksRequired(width, style, railType);
 
-    const fabricCost = totalFabric * fabric.pricePerMeter;
+    const frontLayerCost = totalFabric * frontLayer.pricePerMeter;
+    const secondLayerCost = secondLayer ? totalFabric * secondLayer.pricePerMeter : 0;
     const liningCost = totalFabric * LINING_COSTS[lining];
     const stitchingCost = totalFabric * STITCHING_COST_PER_METER;
     const fixingCost = trackLength * FIXING_COST_PER_METER;
     const railCost = RAIL_COSTS[railType][style] * trackLength;
     const hooksCost = totalHooks * HOOK_COST;
 
-    const subtotal = fabricCost + liningCost + stitchingCost + fixingCost + railCost + hooksCost;
+    const subtotal = frontLayerCost + secondLayerCost + liningCost + stitchingCost + fixingCost + railCost + hooksCost;
     const total = subtotal * quantity;
 
     return {
@@ -171,8 +174,9 @@ export default function CreateQuotation() {
       },
       fabric: {
         totalMeters: totalFabric.toFixed(2),
-        pricePerMeter: fabric.pricePerMeter,
-        cost: fabricCost
+        frontLayerCost,
+        secondLayerCost,
+        cost: frontLayerCost + secondLayerCost
       },
       panels: {
         count: numberOfPanels,
@@ -222,16 +226,26 @@ export default function CreateQuotation() {
     }
   }, [currentItem.measurements]);
 
-  const handleFabricSelect = (fabricId: string) => {
+  const handleFabricSelect = (fabricId: string, layer: 'front' | 'second') => {
     const selectedFabric = fabrics.find(f => f.id === fabricId);
     if (selectedFabric) {
-      setCurrentItem({
-        ...currentItem,
-        fabric: {
-          name: selectedFabric.name,
-          pricePerMeter: selectedFabric.price
-        }
-      });
+      if (layer === 'front') {
+        setCurrentItem({
+          ...currentItem,
+          frontLayer: {
+            name: selectedFabric.name,
+            pricePerMeter: selectedFabric.price
+          }
+        });
+      } else {
+        setCurrentItem({
+          ...currentItem,
+          secondLayer: fabricId === 'none' ? null : {
+            name: selectedFabric.name,
+            pricePerMeter: selectedFabric.price
+          }
+        });
+      }
     }
   };
 
@@ -242,11 +256,11 @@ export default function CreateQuotation() {
     if (!currentItem.measurements.height || currentItem.measurements.height <= 0) {
       return 'Height is required and must be greater than 0';
     }
-    if (!currentItem.fabric.name.trim()) {
-      return 'Fabric name is required';
+    if (!currentItem.frontLayer.name.trim()) {
+      return 'Front layer fabric is required';
     }
-    if (!currentItem.fabric.pricePerMeter || currentItem.fabric.pricePerMeter <= 0) {
-      return 'Fabric price is required and must be greater than 0';
+    if (!currentItem.frontLayer.pricePerMeter || currentItem.frontLayer.pricePerMeter <= 0) {
+      return 'Front layer fabric price is required and must be greater than 0';
     }
     if (currentItem.quantity <= 0) {
       return 'Quantity must be greater than 0';
@@ -275,10 +289,11 @@ export default function CreateQuotation() {
         railType: 'standard',
         lining: 'none'
       },
-      fabric: {
+      frontLayer: {
         name: '',
         pricePerMeter: 0
       },
+      secondLayer: null,
       quantity: 1,
       totalFabric: 0,
       laborCost: 0,
@@ -291,18 +306,20 @@ export default function CreateQuotation() {
   };
 
   const calculateItemCost = (item: QuotationItem) => {
-    const fabricCost = item.totalFabric * item.fabric.pricePerMeter;
+    const frontLayerCost = item.totalFabric * item.frontLayer.pricePerMeter;
+    const secondLayerCost = item.secondLayer ? item.totalFabric * item.secondLayer.pricePerMeter : 0;
     const liningCost = item.totalFabric * LINING_COSTS[item.measurements.lining];
     const railCost = RAIL_COSTS[item.measurements.railType][item.measurements.style] * item.accessories.tracks;
     const hooksCost = item.accessories.hooks * HOOK_COST;
     
     return {
-      fabricCost,
+      frontLayerCost,
+      secondLayerCost,
       liningCost,
       laborCost: item.laborCost,
       railCost,
       hooksCost,
-      total: fabricCost + liningCost + item.laborCost + railCost + hooksCost
+      total: frontLayerCost + secondLayerCost + liningCost + item.laborCost + railCost + hooksCost
     };
   };
 
@@ -468,16 +485,35 @@ export default function CreateQuotation() {
                 <Dices className="h-6 w-6" />
                 Fabric Details
               </h3>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Select Fabric
+                  Front Layer Fabric
                 </label>
                 <select
-                  value={currentItem.fabric.name}
-                  onChange={(e) => handleFabricSelect(e.target.value)}
+                  value={currentItem.frontLayer.name}
+                  onChange={(e) => handleFabricSelect(e.target.value, 'front')}
                   className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
                 >
                   <option value="">Select a fabric</option>
+                  {fabrics.map(fabric => (
+                    <option key={fabric.id} value={fabric.id}>
+                      {fabric.name} - {formatCurrency(fabric.price)} per meter
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Second Layer Fabric (Optional)
+                </label>
+                <select
+                  value={currentItem.secondLayer?.name || 'none'}
+                  onChange={(e) => handleFabricSelect(e.target.value, 'second')}
+                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                >
+                  <option value="none">No second layer</option>
                   {fabrics.map(fabric => (
                     <option key={fabric.id} value={fabric.id}>
                       {fabric.name} - {formatCurrency(fabric.price)} per meter
@@ -526,8 +562,13 @@ export default function CreateQuotation() {
                   <div>
                     <h3 className="font-semibold text-lg">{item.roomName}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {item.fabric.name}
+                      Front Layer: {item.frontLayer.name}
                     </p>
+                    {item.secondLayer && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Second Layer: {item.secondLayer.name}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm - {item.measurements.style}
                     </p>
@@ -555,8 +596,7 @@ export default function CreateQuotation() {
             const breakdown = calculateDetailedBreakdown(item);
             return (
               <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-6 last:border-0">
-                <h3 className="font-semibold text-lg mb-4">{item.roomName} - {item.fabric.name}</h3>
-                
+                <h3 className="font-semibold text-lg mb-4">{item.roomName}</h3>
                 <div className="space-y-4">
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                     <h4 className="font-medium mb-2">Dimensions & Panels</h4>
@@ -576,18 +616,24 @@ export default function CreateQuotation() {
                         <span>{breakdown.fabric.totalMeters} meters</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Fabric per Panel:</span>
-                        <span>{breakdown.panels.fabricPerPanel} meters</span>
+                        <span>Front Layer Cost:</span>
+                        <span>{formatCurrency(breakdown.fabric.frontLayerCost)}</span>
                       </div>
+                      {item.secondLayer && (
+                        <div className="flex justify-between">
+                          <span>Second Layer Cost:</span>
+                          <span>{formatCurrency(breakdown.fabric.secondLayerCost)}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between">
-                        <span>Fabric Cost ({formatCurrency(breakdown.fabric.pricePerMeter)}/m):</span>
+                        <span>Total Fabric Cost:</span>
                         <span>{formatCurrency(breakdown.fabric.cost)}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h4 className="font-medium mb-2">Hardware</h4>
+                    <h4 className="font-medium mb-2">Hardware & Labor</h4>
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span>Track Length:</span>
@@ -605,12 +651,6 @@ export default function CreateQuotation() {
                         <span>Hooks Cost:</span>
                         <span>{formatCurrency(breakdown.hardware.hooksCost)}</span>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                    <h4 className="font-medium mb-2">Labor & Additional Costs</h4>
-                    <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span>Stitching Charge:</span>
                         <span>{formatCurrency(breakdown.labor.stitching)}</span>
@@ -618,10 +658,6 @@ export default function CreateQuotation() {
                       <div className="flex justify-between">
                         <span>Fixing Charge:</span>
                         <span>{formatCurrency(breakdown.labor.fixing)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Lining Cost ({breakdown.lining.type}):</span>
-                        <span>{formatCurrency(breakdown.lining.cost)}</span>
                       </div>
                     </div>
                   </div>
@@ -672,8 +708,10 @@ export default function CreateQuotation() {
                 <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold">{item.roomName} - {item.fabric.name}</h3>
+                      <h3 className="font-semibold">{item.roomName}</h3>
                       <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                        <p>Front Layer: {item.frontLayer.name}</p>
+                        {item.secondLayer && <p>Second Layer: {item.secondLayer.name}</p>}
                         <p>Dimensions: {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm</p>
                         <p>Style: {item.measurements.style}</p>
                         <p>Rail Type: {item.measurements.railType}</p>
@@ -709,3 +747,5 @@ export default function CreateQuotation() {
     </div>
   );
 }
+
+export default CreateQuotation
