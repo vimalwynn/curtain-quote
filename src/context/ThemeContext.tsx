@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
+type Room = 'modern' | 'classic';
 
 interface ThemeContextType {
   theme: Theme;
+  room: Room;
   toggleTheme: () => void;
+  toggleRoom: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -15,24 +18,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (savedTheme === 'dark' || savedTheme === 'light') {
       return savedTheme;
     }
-    
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  const [room, setRoom] = useState<Room>(() => {
+    const savedRoom = localStorage.getItem('room');
+    return (savedRoom === 'modern' || savedRoom === 'classic') ? savedRoom : 'modern';
   });
 
   useEffect(() => {
     const root = window.document.documentElement;
-    
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
+    root.classList.remove('light', 'dark', 'modern', 'classic');
+    root.classList.add(theme, room);
     localStorage.setItem('theme', theme);
-  }, [theme]);
+    localStorage.setItem('room', room);
+  }, [theme, room]);
 
   const toggleTheme = () => {
     setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
   };
 
+  const toggleRoom = () => {
+    setRoom(prevRoom => prevRoom === 'modern' ? 'classic' : 'modern');
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, room, toggleTheme, toggleRoom }}>
       {children}
     </ThemeContext.Provider>
   );
