@@ -19,6 +19,12 @@ interface QuotationItem {
   rate: number;
   lining: boolean;
   blackout: boolean;
+  track: string;
+  trackColor: string;
+  style: string;
+  fold: string;
+  hookType: string;
+  tieBack: boolean;
 }
 
 interface ClientInfo {
@@ -54,21 +60,13 @@ export default function CreateQuotation() {
       quantity: 2,
       rate: 15.500,
       lining: true,
-      blackout: false
-    },
-    {
-      id: '2',
-      slNo: 2,
-      room: 'Master Bedroom',
-      description: 'Bay Window',
-      width: 300,
-      height: 220,
-      fabricCode: 'FAB-002',
-      chiffon: false,
-      quantity: 1,
-      rate: 18.750,
-      lining: true,
-      blackout: true
+      blackout: false,
+      track: 'Double Track',
+      trackColor: 'White',
+      style: 'Pinch Pleat',
+      fold: '2.5',
+      hookType: 'Standard',
+      tieBack: true
     }
   ]);
 
@@ -100,7 +98,13 @@ export default function CreateQuotation() {
         quantity: 1,
         rate: 0,
         lining: false,
-        blackout: false
+        blackout: false,
+        track: 'Single Track',
+        trackColor: 'White',
+        style: 'Pencil Pleat',
+        fold: '2.0',
+        hookType: 'Standard',
+        tieBack: false
       }
     ]);
   };
@@ -271,128 +275,253 @@ export default function CreateQuotation() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="grid grid-cols-[50px,1fr,1fr,100px,100px,120px,100px,80px,100px,100px,100px,100px,40px] gap-4 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  <div>Sl No</div>
-                  <div>Room</div>
-                  <div>Description</div>
-                  <div>Width (cm)</div>
-                  <div>Height (cm)</div>
-                  <div>Fabric Code</div>
-                  <div>Chiffon</div>
-                  <div>Qty</div>
-                  <div>Rate</div>
-                  <div>Amount</div>
-                  <div>Lining</div>
-                  <div>Blackout</div>
-                  <div></div>
-                </div>
                 {items.map((item) => (
-                  <div key={item.id} className="grid grid-cols-[50px,1fr,1fr,100px,100px,120px,100px,80px,100px,100px,100px,100px,40px] gap-4 items-center">
-                    <div className="text-sm text-gray-500">{item.slNo}</div>
-                    <div>
-                      <input
-                        type="text"
-                        placeholder="Room name"
-                        value={item.room}
-                        onChange={(e) => updateItem(item.id, 'room', e.target.value)}
-                        className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      />
+                  <div key={item.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+                        Item #{item.slNo}
+                      </h4>
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className={cn(
+                          "text-gray-400 hover:text-red-500 dark:hover:text-red-400",
+                          items.length === 1 && "opacity-50 cursor-not-allowed"
+                        )}
+                        disabled={items.length === 1}
+                        type="button"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
                     </div>
-                    <div>
-                      <input
-                        type="text"
-                        placeholder="Description"
-                        value={item.description}
-                        onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                        className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Room
+                        </label>
+                        <input
+                          type="text"
+                          value={item.room}
+                          onChange={(e) => updateItem(item.id, 'room', e.target.value)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Description
+                        </label>
+                        <input
+                          type="text"
+                          value={item.description}
+                          onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Fabric Code
+                        </label>
+                        <input
+                          type="text"
+                          value={item.fabricCode}
+                          onChange={(e) => updateItem(item.id, 'fabricCode', e.target.value)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Width (cm)
+                        </label>
+                        <input
+                          type="number"
+                          value={item.width || ''}
+                          onChange={(e) => updateItem(item.id, 'width', parseFloat(e.target.value) || 0)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Height (cm)
+                        </label>
+                        <input
+                          type="number"
+                          value={item.height || ''}
+                          onChange={(e) => updateItem(item.id, 'height', parseFloat(e.target.value) || 0)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Track Type
+                        </label>
+                        <select
+                          value={item.track}
+                          onChange={(e) => updateItem(item.id, 'track', e.target.value)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        >
+                          <option value="Single Track">Single Track</option>
+                          <option value="Double Track">Double Track</option>
+                          <option value="Triple Track">Triple Track</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Track Color
+                        </label>
+                        <select
+                          value={item.trackColor}
+                          onChange={(e) => updateItem(item.id, 'trackColor', e.target.value)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        >
+                          <option value="White">White</option>
+                          <option value="Silver">Silver</option>
+                          <option value="Bronze">Bronze</option>
+                          <option value="Black">Black</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Style
+                        </label>
+                        <select
+                          value={item.style}
+                          onChange={(e) => updateItem(item.id, 'style', e.target.value)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        >
+                          <option value="Pencil Pleat">Pencil Pleat</option>
+                          <option value="Pinch Pleat">Pinch Pleat</option>
+                          <option value="Wave">Wave</option>
+                          <option value="Eyelet">Eyelet</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Fold
+                        </label>
+                        <select
+                          value={item.fold}
+                          onChange={(e) => updateItem(item.id, 'fold', e.target.value)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        >
+                          <option value="2.0">2.0</option>
+                          <option value="2.5">2.5</option>
+                          <option value="3.0">3.0</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Hook Type
+                        </label>
+                        <select
+                          value={item.hookType}
+                          onChange={(e) => updateItem(item.id, 'hookType', e.target.value)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        >
+                          <option value="Standard">Standard</option>
+                          <option value="Decorative">Decorative</option>
+                          <option value="Metal">Metal</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Quantity
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 1)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Rate
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.001"
+                          value={item.rate}
+                          onChange={(e) => updateItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={item.width || ''}
-                        onChange={(e) => updateItem(item.id, 'width', parseFloat(e.target.value) || 0)}
-                        className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      />
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`chiffon-${item.id}`}
+                          checked={item.chiffon}
+                          onChange={(e) => updateItem(item.id, 'chiffon', e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor={`chiffon-${item.id}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                          Chiffon
+                        </label>
+                      </div>
+
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`lining-${item.id}`}
+                          checked={item.lining}
+                          onChange={(e) => updateItem(item.id, 'lining', e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor={`lining-${item.id}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                          Lining
+                        </label>
+                      </div>
+
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`blackout-${item.id}`}
+                          checked={item.blackout}
+                          onChange={(e) => updateItem(item.id, 'blackout', e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor={`blackout-${item.id}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                          Blackout
+                        </label>
+                      </div>
+
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`tieBack-${item.id}`}
+                          checked={item.tieBack}
+                          onChange={(e) => updateItem(item.id, 'tieBack', e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor={`tieBack-${item.id}`} className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                          Tie Back
+                        </label>
+                      </div>
                     </div>
-                    <div>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={item.height || ''}
-                        onChange={(e) => updateItem(item.id, 'height', parseFloat(e.target.value) || 0)}
-                        className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      />
+
+                    <div className="mt-4 text-right">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Total Area: {((item.width * item.height) / 10000).toFixed(2)} m²
+                      </p>
+                      <p className="text-lg font-medium text-gray-900 dark:text-white">
+                        Amount: {formatCurrency(calculateItemTotal(item))}
+                      </p>
                     </div>
-                    <div>
-                      <input
-                        type="text"
-                        placeholder="Fabric code"
-                        value={item.fabricCode}
-                        onChange={(e) => updateItem(item.id, 'fabricCode', e.target.value)}
-                        className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="checkbox"
-                        checked={item.chiffon}
-                        onChange={(e) => updateItem(item.id, 'chiffon', e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                        className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.001"
-                        value={item.rate}
-                        onChange={(e) => updateItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
-                        className="w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                      />
-                    </div>
-                    <div className="text-right font-medium text-gray-900 dark:text-white">
-                      {formatCurrency(calculateItemTotal(item))}
-                    </div>
-                    <div>
-                      <input
-                        type="checkbox"
-                        checked={item.lining}
-                        onChange={(e) => updateItem(item.id, 'lining', e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="checkbox"
-                        checked={item.blackout}
-                        onChange={(e) => updateItem(item.id, 'blackout', e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                    </div>
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className={cn(
-                        "text-gray-400 hover:text-red-500 dark:hover:text-red-400",
-                        items.length === 1 && "opacity-50 cursor-not-allowed"
-                      )}
-                      disabled={items.length === 1}
-                      type="button"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
                   </div>
                 ))}
                 
