@@ -34,7 +34,6 @@ interface QuotationItem {
   laborCost: number;
   accessories: {
     tracks: number;
-    hooks: number;
   };
 }
 
@@ -77,7 +76,6 @@ const LINING_COSTS = {
 };
 
 const LABOR_COST_PER_METER = 15;
-const HOOK_COST = 0.5;
 const TRACK_COST_PER_METER = 25;
 const STITCHING_COST_PER_METER = 8;
 const FIXING_COST_PER_METER = 12;
@@ -109,8 +107,7 @@ export default function CreateQuotation() {
     totalFabric: 0,
     laborCost: 0,
     accessories: {
-      tracks: 0,
-      hooks: 0
+      tracks: 0
     }
   });
 
@@ -120,18 +117,6 @@ export default function CreateQuotation() {
     const fabricWidth = width * fullness;
     const totalHeight = height + 0.3;
     return fabricWidth * totalHeight;
-  };
-
-  const calculateHooksRequired = (width: number, style: 'wave' | 'pencilPleat', railType: 'standard' | 'deluxe' | 'motorized') => {
-    const baseSpacing = style === 'wave' ? 0.1 : 0.15;
-    const spacingMultiplier = {
-      standard: 1,
-      deluxe: 0.8,
-      motorized: 0.7
-    };
-    
-    const spacing = baseSpacing * spacingMultiplier[railType];
-    return Math.ceil(width / spacing);
   };
 
   const calculatePanels = (width: number) => {
@@ -153,7 +138,6 @@ export default function CreateQuotation() {
     
     const totalFabric = totalFabricPerCurtain;
     const trackLength = width;
-    const totalHooks = calculateHooksRequired(width, style, railType);
 
     const frontLayerCost = totalFabric * frontLayer.pricePerMeter;
     const secondLayerCost = secondLayer ? totalFabric * secondLayer.pricePerMeter : 0;
@@ -161,9 +145,8 @@ export default function CreateQuotation() {
     const stitchingCost = totalFabric * STITCHING_COST_PER_METER;
     const fixingCost = trackLength * FIXING_COST_PER_METER;
     const railCost = RAIL_COSTS[railType][style] * trackLength;
-    const hooksCost = totalHooks * HOOK_COST;
 
-    const subtotal = frontLayerCost + secondLayerCost + liningCost + stitchingCost + fixingCost + railCost + hooksCost;
+    const subtotal = frontLayerCost + secondLayerCost + liningCost + stitchingCost + fixingCost + railCost;
     const total = subtotal * quantity;
 
     return {
@@ -188,9 +171,7 @@ export default function CreateQuotation() {
       },
       hardware: {
         trackLength: trackLength.toFixed(2),
-        railCost,
-        hookCount: totalHooks,
-        hooksCost
+        railCost
       },
       labor: {
         stitching: stitchingCost,
@@ -208,19 +189,12 @@ export default function CreateQuotation() {
     if (currentItem.measurements.width && currentItem.measurements.height) {
       const totalFabric = calculateFabricRequired(currentItem.measurements);
       
-      const hooks = calculateHooksRequired(
-        currentItem.measurements.width,
-        currentItem.measurements.style,
-        currentItem.measurements.railType
-      );
-      
       setCurrentItem(prev => ({
         ...prev,
         totalFabric,
         laborCost: totalFabric * LABOR_COST_PER_METER,
         accessories: {
-          tracks: currentItem.measurements.width,
-          hooks
+          tracks: currentItem.measurements.width
         }
       }));
     }
@@ -320,8 +294,7 @@ export default function CreateQuotation() {
       totalFabric: 0,
       laborCost: 0,
       accessories: {
-        tracks: 0,
-        hooks: 0
+        tracks: 0
       }
     });
     setError(null);
@@ -332,7 +305,6 @@ export default function CreateQuotation() {
     const secondLayerCost = item.secondLayer ? item.totalFabric * item.secondLayer.pricePerMeter : 0;
     const liningCost = item.totalFabric * LINING_COSTS[item.measurements.lining];
     const railCost = RAIL_COSTS[item.measurements.railType][item.measurements.style] * item.accessories.tracks;
-    const hooksCost = item.accessories.hooks * HOOK_COST;
     
     return {
       frontLayerCost,
@@ -340,8 +312,7 @@ export default function CreateQuotation() {
       liningCost,
       laborCost: item.laborCost,
       railCost,
-      hooksCost,
-      total: frontLayerCost + secondLayerCost + liningCost + item.laborCost + railCost + hooksCost
+      total: frontLayerCost + secondLayerCost + liningCost + item.laborCost + railCost
     };
   };
 
@@ -664,14 +635,6 @@ export default function CreateQuotation() {
                       <div className="flex justify-between">
                         <span>Rail Cost:</span>
                         <span>{formatCurrency(breakdown.hardware.railCost)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Number of Hooks:</span>
-                        <span>{breakdown.hardware.hookCount}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Hooks Cost:</span>
-                        <span>{formatCurrency(breakdown.hardware.hooksCost)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Stitching Charge:</span>
