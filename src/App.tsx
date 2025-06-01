@@ -20,7 +20,7 @@ function App() {
         setSidebarOpen={setSidebarOpen}
       >
         <Routes>
-          <Route path="/" element={<Navigate to="/quotations/create" replace />} />
+          <Route path="/" element={<Navigate to="/quotations/create\" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/users" element={<UserManagement />} />
           <Route path="/products" element={<Products />} />
