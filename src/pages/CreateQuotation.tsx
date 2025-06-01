@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { Modal } from '../components/ui/Modal';
+import Modal from '../components/ui/Modal';
 import { Calculator, FileText, Plus } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 
