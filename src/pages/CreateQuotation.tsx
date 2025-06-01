@@ -68,19 +68,6 @@ const RAIL_COSTS = {
   }
 };
 
-const HOOK_SPACING = {
-  wave: {
-    standard: 0.08,
-    deluxe: 0.07,
-    motorized: 0.06
-  },
-  pencilPleat: {
-    standard: 0.10,
-    deluxe: 0.08,
-    motorized: 0.08
-  }
-};
-
 const LINING_COSTS = {
   standard: 8,
   blackout: 12,
@@ -141,11 +128,19 @@ export default function CreateQuotation() {
   };
 
   const calculateHooksRequired = (width: number, style: 'wave' | 'pencilPleat', railType: 'standard' | 'deluxe' | 'motorized') => {
-    const spacing = HOOK_SPACING[style][railType];
+    // Standard hook spacing based on style and rail type
+    const baseSpacing = style === 'wave' ? 0.1 : 0.15;
+    const spacingMultiplier = {
+      standard: 1,
+      deluxe: 0.8,
+      motorized: 0.7
+    };
+    
+    const spacing = baseSpacing * spacingMultiplier[railType];
     return Math.ceil(width / spacing);
   };
 
-  const calculatePanels = (width: number, style: 'wave' | 'pencilPleat') => {
+  const calculatePanels = (width: number) => {
     const maxPanelWidth = 1.5;
     return Math.ceil(width / maxPanelWidth);
   };
@@ -154,7 +149,7 @@ export default function CreateQuotation() {
     const { measurements, fabric, quantity } = item;
     const { width, height, style, railType, lining } = measurements;
 
-    const numberOfPanels = calculatePanels(width, style);
+    const numberOfPanels = calculatePanels(width);
     const panelWidth = width / numberOfPanels;
 
     const fullness = FULLNESS_RATIOS[style][railType];
@@ -170,8 +165,7 @@ export default function CreateQuotation() {
 
     const totalFabric = totalFabricPerCurtain + patternMatchingExtra;
     const trackLength = width;
-    const hooksPerPanel = Math.ceil(panelWidth / HOOK_SPACING[style][railType]);
-    const totalHooks = hooksPerPanel * numberOfPanels;
+    const totalHooks = calculateHooksRequired(width, style, railType);
 
     const fabricCost = totalFabric * fabric.pricePerMeter;
     const liningCost = totalFabric * LINING_COSTS[lining];
@@ -527,8 +521,6 @@ export default function CreateQuotation() {
             </div>
           </div>
 
-          {currentItem.fabric.name && renderBreakdown(currentItem)}
-
           <div className="flex justify-end pt-4">
             <Button 
               onClick={handleAddItem} 
@@ -731,5 +723,3 @@ export default function CreateQuotation() {
     </div>
   );
 }
-
-export default CreateQuotation;
