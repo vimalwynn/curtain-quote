@@ -25,6 +25,7 @@ interface FabricDetails {
 }
 
 interface QuotationItem {
+  roomName: string;
   measurements: CurtainMeasurements;
   fabric: FabricDetails;
   quantity: number;
@@ -88,6 +89,7 @@ export default function CreateQuotation() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentItem, setCurrentItem] = useState<QuotationItem>({
+    roomName: "Window 1",
     measurements: {
       width: DEFAULT_WIDTH,
       height: DEFAULT_HEIGHT,
@@ -260,7 +262,10 @@ export default function CreateQuotation() {
     }
 
     setItems([...items, currentItem]);
+    
+    const nextWindowNumber = items.length + 2;
     setCurrentItem({
+      roomName: `Window ${nextWindowNumber}`,
       measurements: {
         width: DEFAULT_WIDTH,
         height: DEFAULT_HEIGHT,
@@ -338,6 +343,22 @@ export default function CreateQuotation() {
                 <Ruler className="h-6 w-6" />
                 Measurements
               </h3>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Room/Window Name
+                </label>
+                <input
+                  type="text"
+                  value={currentItem.roomName}
+                  onChange={(e) => setCurrentItem({
+                    ...currentItem,
+                    roomName: e.target.value
+                  })}
+                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-2 sm:col-span-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -501,7 +522,10 @@ export default function CreateQuotation() {
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-semibold text-lg">{item.fabric.name}</h3>
+                    <h3 className="font-semibold text-lg">{item.roomName}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {item.fabric.name}
+                    </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm - {item.measurements.style}
                     </p>
@@ -529,7 +553,7 @@ export default function CreateQuotation() {
             const breakdown = calculateDetailedBreakdown(item);
             return (
               <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-6 last:border-0">
-                <h3 className="font-semibold text-lg mb-4">{item.fabric.name}</h3>
+                <h3 className="font-semibold text-lg mb-4">{item.roomName} - {item.fabric.name}</h3>
                 
                 <div className="space-y-4">
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
@@ -646,7 +670,7 @@ export default function CreateQuotation() {
                 <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold">{item.fabric.name}</h3>
+                      <h3 className="font-semibold">{item.roomName} - {item.fabric.name}</h3>
                       <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                         <p>Dimensions: {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm</p>
                         <p>Style: {item.measurements.style}</p>
