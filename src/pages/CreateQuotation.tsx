@@ -33,37 +33,56 @@ interface ClientInfo {
 export default function CreateQuotation() {
   const navigate = useNavigate();
   const [client, setClient] = useState<ClientInfo>({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    address: '',
-    vatNumber: ''
+    name: 'John Smith',
+    email: 'john.smith@example.com',
+    phone: '+973 1234 5678',
+    company: 'Home Decor LLC',
+    address: 'Building 123, Road 1234\nManama, Bahrain',
+    vatNumber: 'VAT123456789'
   });
 
   const [items, setItems] = useState<QuotationItem[]>([
     {
       id: '1',
       slNo: 1,
-      room: '',
-      description: '',
-      width: 0,
-      height: 0,
-      fabricCode: '',
+      room: 'Living Room',
+      description: 'Main Window',
+      width: 250,
+      height: 180,
+      fabricCode: 'FAB-001',
+      chiffon: true,
+      quantity: 2,
+      rate: 15.500,
+      lining: true,
+      blackout: false
+    },
+    {
+      id: '2',
+      slNo: 2,
+      room: 'Master Bedroom',
+      description: 'Bay Window',
+      width: 300,
+      height: 220,
+      fabricCode: 'FAB-002',
       chiffon: false,
       quantity: 1,
-      rate: 0,
-      lining: false,
-      blackout: false
+      rate: 18.750,
+      lining: true,
+      blackout: true
     }
   ]);
 
-  const [validUntil, setValidUntil] = useState('');
+  const [validUntil, setValidUntil] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 30);
+    return date.toISOString().split('T')[0];
+  });
+  
   const [quoteNumber] = useState(`QT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`);
   const [paymentTerms, setPaymentTerms] = useState('30');
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState('Please note that final measurements will be confirmed during site visit.');
   const [terms, setTerms] = useState(
-    'Payment is due within 30 days from the date of invoice. Late payments are subject to a 5% monthly finance charge.'
+    '1. 50% advance payment required to confirm the order.\n2. Delivery time: 2-3 weeks after confirmation.\n3. Installation included in the quoted price.\n4. Warranty: 1 year on installation and hardware.'
   );
   
   const addItem = () => {
