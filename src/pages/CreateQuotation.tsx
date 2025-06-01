@@ -15,6 +15,7 @@ interface CurtainMeasurements {
   height: number;
   fullness: number;
   style: 'wave' | 'pencilPleat';
+  railType: 'standard' | 'deluxe' | 'motorized';
   lining: 'standard' | 'blackout' | 'thermal';
 }
 
@@ -38,11 +39,46 @@ interface QuotationItem {
 
 const DEFAULT_WIDTH = 3;
 const DEFAULT_HEIGHT = 3;
-const DEFAULT_FULLNESS = 3;
 
 const FULLNESS_RATIOS = {
-  wave: DEFAULT_FULLNESS,
-  pencilPleat: DEFAULT_FULLNESS
+  wave: {
+    standard: 2.5,
+    deluxe: 2.7,
+    motorized: 2.8
+  },
+  pencilPleat: {
+    standard: 2.5,
+    deluxe: 2.8,
+    motorized: 3.0
+  }
+};
+
+const RAIL_COSTS = {
+  standard: {
+    wave: 35,
+    pencilPleat: 25
+  },
+  deluxe: {
+    wave: 45,
+    pencilPleat: 35
+  },
+  motorized: {
+    wave: 120,
+    pencilPleat: 100
+  }
+};
+
+const HOOK_SPACING = {
+  wave: {
+    standard: 0.08,
+    deluxe: 0.07,
+    motorized: 0.06
+  },
+  pencilPleat: {
+    standard: 0.10,
+    deluxe: 0.08,
+    motorized: 0.08
+  }
 };
 
 const LINING_COSTS = {
@@ -56,7 +92,6 @@ const HOOK_COST = 0.5;
 const TRACK_COST_PER_METER = 25;
 const STITCHING_COST_PER_METER = 8;
 const FIXING_COST_PER_METER = 12;
-const HOOK_SPACING = 0.15;
 
 const mToCm = (meters: number) => Math.round(meters * 100);
 const cmToM = (cm: number) => cm / 100;
@@ -70,8 +105,9 @@ export default function CreateQuotation() {
     measurements: {
       width: DEFAULT_WIDTH,
       height: DEFAULT_HEIGHT,
-      fullness: DEFAULT_FULLNESS,
+      fullness: FULLNESS_RATIOS.wave.standard,
       style: 'wave',
+      railType: 'standard',
       lining: 'standard'
     },
     fabric: {
@@ -88,23 +124,9 @@ export default function CreateQuotation() {
     }
   });
 
-  const handleFabricSelect = (fabricId: string) => {
-    const selectedFabric = fabrics.find(f => f.id === fabricId);
-    if (selectedFabric) {
-      setCurrentItem({
-        ...currentItem,
-        fabric: {
-          name: selectedFabric.name,
-          pricePerMeter: selectedFabric.price,
-          patternRepeat: 0
-        }
-      });
-    }
-  };
-
   const calculateFabricRequired = (measurements: CurtainMeasurements, patternRepeat: number) => {
-    const { width, height, style } = measurements;
-    const fullness = FULLNESS_RATIOS[style];
+    const { width, height, style, railType } = measurements;
+    const fullness = FULLNESS_RATIOS[style][railType];
     
     let fabricWidth = width * fullness;
     
@@ -118,9 +140,9 @@ export default function CreateQuotation() {
     return (fabricWidth * totalHeight);
   };
 
-  const calculateHooksRequired = (width: number, style: 'wave' | 'pencilPleat') => {
-    const hooksPerMeter = style === 'wave' ? 6 : 8;
-    return Math.ceil(width * hooksPerMeter);
+  const calculateHooksRequired = (width: number, style: 'wave' | 'pencilPleat', railType: 'standard' | 'deluxe' | 'motorized') => {
+    const spacing = HOOK_SPACING[style][railType];
+    return Math.ceil(width / spacing);
   };
 
   const calculatePanels = (width: number, style: 'wave' | 'pencilPleat') => {
@@ -130,12 +152,12 @@ export default function CreateQuotation() {
 
   const calculateDetailedBreakdown = (item: QuotationItem) => {
     const { measurements, fabric, quantity } = item;
-    const { width, height, style, lining } = measurements;
+    const { width, height, style, railType, lining } = measurements;
 
     const numberOfPanels = calculatePanels(width, style);
     const panelWidth = width / numberOfPanels;
 
-    const fullness = FULLNESS_RATIOS[style];
+    const fullness = FULLNESS_RATIOS[style][railType];
     const fabricWidth = width * fullness;
     const fabricHeight = height + 0.3;
     const totalFabricPerCurtain = fabricWidth * fabricHeight;
@@ -148,17 +170,17 @@ export default function CreateQuotation() {
 
     const totalFabric = totalFabricPerCurtain + patternMatchingExtra;
     const trackLength = width;
-    const hooksPerPanel = Math.ceil(panelWidth / HOOK_SPACING);
+    const hooksPerPanel = Math.ceil(panelWidth / HOOK_SPACING[style][railType]);
     const totalHooks = hooksPerPanel * numberOfPanels;
 
     const fabricCost = totalFabric * fabric.pricePerMeter;
     const liningCost = totalFabric * LINING_COSTS[lining];
     const stitchingCost = totalFabric * STITCHING_COST_PER_METER;
     const fixingCost = trackLength * FIXING_COST_PER_METER;
-    const trackCost = trackLength * TRACK_COST_PER_METER;
+    const railCost = RAIL_COSTS[railType][style] * trackLength;
     const hooksCost = totalHooks * HOOK_COST;
 
-    const subtotal = fabricCost + liningCost + stitchingCost + fixingCost + trackCost + hooksCost;
+    const subtotal = fabricCost + liningCost + stitchingCost + fixingCost + railCost + hooksCost;
     const total = subtotal * quantity;
 
     return {
@@ -182,7 +204,7 @@ export default function CreateQuotation() {
       },
       hardware: {
         trackLength: trackLength.toFixed(2),
-        trackCost,
+        railCost,
         hookCount: totalHooks,
         hooksCost
       },
@@ -207,7 +229,8 @@ export default function CreateQuotation() {
       
       const hooks = calculateHooksRequired(
         currentItem.measurements.width,
-        currentItem.measurements.style
+        currentItem.measurements.style,
+        currentItem.measurements.railType
       );
       
       setCurrentItem(prev => ({
@@ -221,6 +244,20 @@ export default function CreateQuotation() {
       }));
     }
   }, [currentItem.measurements, currentItem.fabric.patternRepeat]);
+
+  const handleFabricSelect = (fabricId: string) => {
+    const selectedFabric = fabrics.find(f => f.id === fabricId);
+    if (selectedFabric) {
+      setCurrentItem({
+        ...currentItem,
+        fabric: {
+          name: selectedFabric.name,
+          pricePerMeter: selectedFabric.price,
+          patternRepeat: 0
+        }
+      });
+    }
+  };
 
   const validateItem = () => {
     if (!currentItem.measurements.width || currentItem.measurements.width <= 0) {
@@ -254,8 +291,9 @@ export default function CreateQuotation() {
       measurements: {
         width: DEFAULT_WIDTH,
         height: DEFAULT_HEIGHT,
-        fullness: DEFAULT_FULLNESS,
+        fullness: FULLNESS_RATIOS.wave.standard,
         style: 'wave',
+        railType: 'standard',
         lining: 'standard'
       },
       fabric: {
@@ -277,17 +315,16 @@ export default function CreateQuotation() {
   const calculateItemCost = (item: QuotationItem) => {
     const fabricCost = item.totalFabric * item.fabric.pricePerMeter;
     const liningCost = item.totalFabric * LINING_COSTS[item.measurements.lining];
-    const accessoriesCost = (
-      item.accessories.tracks * TRACK_COST_PER_METER +
-      item.accessories.hooks * HOOK_COST
-    );
+    const railCost = RAIL_COSTS[item.measurements.railType][item.measurements.style] * item.accessories.tracks;
+    const hooksCost = item.accessories.hooks * HOOK_COST;
     
     return {
       fabricCost,
       liningCost,
       laborCost: item.laborCost,
-      accessoriesCost,
-      total: fabricCost + liningCost + item.laborCost + accessoriesCost
+      railCost,
+      hooksCost,
+      total: fabricCost + liningCost + item.laborCost + railCost + hooksCost
     };
   };
 
@@ -296,111 +333,6 @@ export default function CreateQuotation() {
       const costs = calculateItemCost(item);
       return sum + (costs.total * item.quantity);
     }, 0);
-  };
-
-  const renderBreakdown = (item: QuotationItem) => {
-    const breakdown = calculateDetailedBreakdown(item);
-    
-    return (
-      <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
-        <h3 className="text-lg font-semibold mb-4">Calculation Breakdown</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-            <h4 className="font-medium mb-3">Measurements</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Width:</span>
-                <span>{breakdown.dimensions.width}cm</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Height:</span>
-                <span>{breakdown.dimensions.height}cm</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Number of Panels:</span>
-                <span>{breakdown.panels.count}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Panel Width:</span>
-                <span>{breakdown.dimensions.panelWidth}cm</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-            <h4 className="font-medium mb-3">Fabric Details</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Total Fabric Required:</span>
-                <span>{breakdown.fabric.totalMeters} meters</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Fabric per Panel:</span>
-                <span>{breakdown.panels.fabricPerPanel} meters</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Fabric Cost:</span>
-                <span>{formatCurrency(breakdown.fabric.cost)}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-            <h4 className="font-medium mb-3">Hardware</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Track Length:</span>
-                <span>{breakdown.hardware.trackLength} meters</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Track Cost:</span>
-                <span>{formatCurrency(breakdown.hardware.trackCost)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Number of Hooks:</span>
-                <span>{breakdown.hardware.hookCount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Hooks Cost:</span>
-                <span>{formatCurrency(breakdown.hardware.hooksCost)}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-            <h4 className="font-medium mb-3">Labor & Additional</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Stitching Charge:</span>
-                <span>{formatCurrency(breakdown.labor.stitching)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Fixing Charge:</span>
-                <span>{formatCurrency(breakdown.labor.fixing)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Lining Cost ({breakdown.lining.type}):</span>
-                <span>{formatCurrency(breakdown.lining.cost)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-          <div className="flex justify-between items-center">
-            <div className="space-y-1">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Subtotal per unit</p>
-              <p className="text-lg font-semibold">{formatCurrency(breakdown.totals.subtotal)}</p>
-            </div>
-            <div className="space-y-1 text-right">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total ({breakdown.totals.quantity} units)</p>
-              <p className="text-lg font-semibold">{formatCurrency(breakdown.totals.total)}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
   };
 
   return (
@@ -482,13 +414,35 @@ export default function CreateQuotation() {
                     measurements: {
                       ...currentItem.measurements,
                       style: e.target.value as 'wave' | 'pencilPleat',
-                      fullness: FULLNESS_RATIOS[e.target.value as 'wave' | 'pencilPleat']
+                      fullness: FULLNESS_RATIOS[e.target.value as 'wave' | 'pencilPleat'][currentItem.measurements.railType]
                     }
                   })}
                   className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
                 >
                   <option value="wave">Wave</option>
                   <option value="pencilPleat">Pencil Pleat</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Rail Type
+                </label>
+                <select
+                  value={currentItem.measurements.railType}
+                  onChange={(e) => setCurrentItem({
+                    ...currentItem,
+                    measurements: {
+                      ...currentItem.measurements,
+                      railType: e.target.value as 'standard' | 'deluxe' | 'motorized',
+                      fullness: FULLNESS_RATIOS[currentItem.measurements.style][e.target.value as 'standard' | 'deluxe' | 'motorized']
+                    }
+                  })}
+                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                >
+                  <option value="standard">Standard Rail</option>
+                  <option value="deluxe">Deluxe Rail</option>
+                  <option value="motorized">Motorized Rail</option>
                 </select>
               </div>
 
@@ -662,8 +616,8 @@ export default function CreateQuotation() {
                         <span>{breakdown.hardware.trackLength} meters</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Track Cost:</span>
-                        <span>{formatCurrency(breakdown.hardware.trackCost)}</span>
+                        <span>Rail Cost:</span>
+                        <span>{formatCurrency(breakdown.hardware.railCost)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Number of Hooks:</span>
@@ -744,6 +698,7 @@ export default function CreateQuotation() {
                       <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
                         <p>Dimensions: {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm</p>
                         <p>Style: {item.measurements.style}</p>
+                        <p>Rail Type: {item.measurements.railType}</p>
                         <p>Lining: {item.measurements.lining}</p>
                         <p>Quantity: {item.quantity}</p>
                       </div>
@@ -777,4 +732,4 @@ export default function CreateQuotation() {
   );
 }
 
-export default CreateQuotation
+export default CreateQuotation;
