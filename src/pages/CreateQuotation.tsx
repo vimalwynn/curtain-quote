@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import { Calculator, FileText, Plus, Ruler, Dices } from 'lucide-react';
+import { Calculator, FileText, Plus, Ruler, Dices, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 
 interface CurtainMeasurements {
@@ -54,6 +54,7 @@ export default function CreateQuotation() {
   const [items, setItems] = useState<QuotationItem[]>([]);
   const [showCalculationModal, setShowCalculationModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [currentItem, setCurrentItem] = useState<QuotationItem>({
     measurements: {
       width: DEFAULT_WIDTH,
@@ -125,31 +126,56 @@ export default function CreateQuotation() {
     }
   }, [currentItem.measurements, currentItem.fabric.patternRepeat]);
 
-  const handleAddItem = () => {
-    if (currentItem.measurements.width && currentItem.measurements.height && currentItem.fabric.name) {
-      setItems([...items, currentItem]);
-      setCurrentItem({
-        measurements: {
-          width: DEFAULT_WIDTH,
-          height: DEFAULT_HEIGHT,
-          fullness: DEFAULT_FULLNESS,
-          style: 'wave',
-          lining: 'standard'
-        },
-        fabric: {
-          name: '',
-          pricePerMeter: 0,
-          patternRepeat: 0
-        },
-        quantity: 1,
-        totalFabric: 0,
-        laborCost: 0,
-        accessories: {
-          tracks: 0,
-          hooks: 0
-        }
-      });
+  const validateItem = () => {
+    if (!currentItem.measurements.width || currentItem.measurements.width <= 0) {
+      return 'Width is required and must be greater than 0';
     }
+    if (!currentItem.measurements.height || currentItem.measurements.height <= 0) {
+      return 'Height is required and must be greater than 0';
+    }
+    if (!currentItem.fabric.name.trim()) {
+      return 'Fabric name is required';
+    }
+    if (!currentItem.fabric.pricePerMeter || currentItem.fabric.pricePerMeter <= 0) {
+      return 'Fabric price is required and must be greater than 0';
+    }
+    if (currentItem.quantity <= 0) {
+      return 'Quantity must be greater than 0';
+    }
+    return null;
+  };
+
+  const handleAddItem = () => {
+    const validationError = validateItem();
+    if (validationError) {
+      setError(validationError);
+      setTimeout(() => setError(null), 3000); // Clear error after 3 seconds
+      return;
+    }
+
+    setItems([...items, currentItem]);
+    setCurrentItem({
+      measurements: {
+        width: DEFAULT_WIDTH,
+        height: DEFAULT_HEIGHT,
+        fullness: DEFAULT_FULLNESS,
+        style: 'wave',
+        lining: 'standard'
+      },
+      fabric: {
+        name: '',
+        pricePerMeter: 0,
+        patternRepeat: 0
+      },
+      quantity: 1,
+      totalFabric: 0,
+      laborCost: 0,
+      accessories: {
+        tracks: 0,
+        hooks: 0
+      }
+    });
+    setError(null);
   };
 
   const calculateItemCost = (item: QuotationItem) => {
@@ -189,6 +215,15 @@ export default function CreateQuotation() {
           </Button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-4">
+          <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
+            <AlertCircle className="h-5 w-5" />
+            <p>{error}</p>
+          </div>
+        </div>
+      )}
 
       <Card>
         <div className="p-6 space-y-6">
