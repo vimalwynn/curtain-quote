@@ -22,7 +22,6 @@ interface CurtainMeasurements {
 interface FabricDetails {
   name: string;
   pricePerMeter: number;
-  patternRepeat: number;
 }
 
 interface QuotationItem {
@@ -99,8 +98,7 @@ export default function CreateQuotation() {
     },
     fabric: {
       name: '',
-      pricePerMeter: 0,
-      patternRepeat: 0
+      pricePerMeter: 0
     },
     quantity: 1,
     totalFabric: 0,
@@ -111,24 +109,15 @@ export default function CreateQuotation() {
     }
   });
 
-  const calculateFabricRequired = (measurements: CurtainMeasurements, patternRepeat: number) => {
+  const calculateFabricRequired = (measurements: CurtainMeasurements) => {
     const { width, height, style, railType } = measurements;
     const fullness = FULLNESS_RATIOS[style][railType];
-    
-    let fabricWidth = width * fullness;
-    
-    if (patternRepeat > 0) {
-      const repeatsNeeded = Math.ceil(height / patternRepeat);
-      height += patternRepeat * (repeatsNeeded - 1);
-    }
-    
-    const totalHeight = height + 0.3;
-    
-    return (fabricWidth * totalHeight);
+    const fabricWidth = width * fullness;
+    const totalHeight = height + 0.3; // Adding 30cm for hems and headers
+    return fabricWidth * totalHeight;
   };
 
   const calculateHooksRequired = (width: number, style: 'wave' | 'pencilPleat', railType: 'standard' | 'deluxe' | 'motorized') => {
-    // Standard hook spacing based on style and rail type
     const baseSpacing = style === 'wave' ? 0.1 : 0.15;
     const spacingMultiplier = {
       standard: 1,
@@ -157,13 +146,7 @@ export default function CreateQuotation() {
     const fabricHeight = height + 0.3;
     const totalFabricPerCurtain = fabricWidth * fabricHeight;
     
-    let patternMatchingExtra = 0;
-    if (fabric.patternRepeat > 0) {
-      const repeatsNeeded = Math.ceil(fabricHeight / fabric.patternRepeat);
-      patternMatchingExtra = fabric.patternRepeat * (repeatsNeeded - 1) * fabricWidth;
-    }
-
-    const totalFabric = totalFabricPerCurtain + patternMatchingExtra;
+    const totalFabric = totalFabricPerCurtain;
     const trackLength = width;
     const totalHooks = calculateHooksRequired(width, style, railType);
 
@@ -216,10 +199,7 @@ export default function CreateQuotation() {
 
   useEffect(() => {
     if (currentItem.measurements.width && currentItem.measurements.height) {
-      const totalFabric = calculateFabricRequired(
-        currentItem.measurements,
-        currentItem.fabric.patternRepeat
-      );
+      const totalFabric = calculateFabricRequired(currentItem.measurements);
       
       const hooks = calculateHooksRequired(
         currentItem.measurements.width,
@@ -237,7 +217,7 @@ export default function CreateQuotation() {
         }
       }));
     }
-  }, [currentItem.measurements, currentItem.fabric.patternRepeat]);
+  }, [currentItem.measurements]);
 
   const handleFabricSelect = (fabricId: string) => {
     const selectedFabric = fabrics.find(f => f.id === fabricId);
@@ -246,8 +226,7 @@ export default function CreateQuotation() {
         ...currentItem,
         fabric: {
           name: selectedFabric.name,
-          pricePerMeter: selectedFabric.price,
-          patternRepeat: 0
+          pricePerMeter: selectedFabric.price
         }
       });
     }
@@ -292,8 +271,7 @@ export default function CreateQuotation() {
       },
       fabric: {
         name: '',
-        pricePerMeter: 0,
-        patternRepeat: 0
+        pricePerMeter: 0
       },
       quantity: 1,
       totalFabric: 0,
@@ -483,24 +461,6 @@ export default function CreateQuotation() {
                     </option>
                   ))}
                 </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Pattern Repeat (cm)
-                </label>
-                <input
-                  type="number"
-                  value={currentItem.fabric.patternRepeat ? mToCm(currentItem.fabric.patternRepeat) : ''}
-                  onChange={(e) => setCurrentItem({
-                    ...currentItem,
-                    fabric: {
-                      ...currentItem.fabric,
-                      patternRepeat: cmToM(parseInt(e.target.value))
-                    }
-                  })}
-                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
-                />
               </div>
 
               <div>
