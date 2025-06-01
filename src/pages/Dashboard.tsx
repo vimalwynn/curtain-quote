@@ -6,6 +6,7 @@ import AreaChart from '../components/dashboard/AreaChart';
 import BarChart from '../components/dashboard/BarChart';
 import Button from '../components/ui/Button';
 import { stats, revenueData, userActivityData, recentActivities, topSellingProducts } from '../data/mockData';
+import { formatCurrency } from '../utils/formatCurrency';
 
 export default function Dashboard() {
   const renderIcon = (iconName: string) => {
@@ -25,6 +26,11 @@ export default function Dashboard() {
     }
   };
 
+  const formattedStats = stats.map(stat => ({
+    ...stat,
+    value: stat.name.includes('Revenue') ? formatCurrency(parseFloat(stat.value.replace(/[^0-9.-]+/g, ''))) : stat.value
+  }));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -37,7 +43,7 @@ export default function Dashboard() {
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {formattedStats.map((stat) => (
           <StatCard
             key={stat.id}
             title={stat.name}
@@ -144,7 +150,7 @@ export default function Dashboard() {
                           {product.sold} units
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
-                          {product.revenue}
+                          {formatCurrency(parseFloat(product.revenue.replace(/[^0-9.-]+/g, '')))}
                         </td>
                       </tr>
                     ))}

@@ -29,7 +29,7 @@ export const products = [
 // Dashboard statistics
 export const stats = [
   { id: '1', name: 'Total Users', value: 1240, icon: 'Users', change: 12.5, trend: 'up' },
-  { id: '2', name: 'Total Revenue', value: '$54,350', icon: 'DollarSign', change: 8.2, trend: 'up' },
+  { id: '2', name: 'Total Revenue', value: '54350', icon: 'DollarSign', change: 8.2, trend: 'up' },
   { id: '3', name: 'Active Products', value: 84, icon: 'Package', change: -2.4, trend: 'down' },
   { id: '4', name: 'Conversion Rate', value: '24.8%', icon: 'BarChart', change: 4.1, trend: 'up' },
 ];
@@ -71,9 +71,9 @@ export const recentActivities = [
 
 // Top selling products
 export const topSellingProducts = [
-  { id: '1', name: 'Premium Laptop', sold: 58, revenue: '$75,430' },
-  { id: '2', name: 'Wireless Headphones', sold: 127, revenue: '$25,400' },
-  { id: '3', name: 'Smart Watch', sold: 83, revenue: '$20,760' },
-  { id: '4', name: 'Ultra HD Monitor', sold: 41, revenue: '$14,350' },
-  { id: '5', name: 'Bluetooth Speaker', sold: 74, revenue: '$6,670' },
+  { id: '1', name: 'Premium Laptop', sold: 58, revenue: '75430' },
+  { id: '2', name: 'Wireless Headphones', sold: 127, revenue: '25400' },
+  { id: '3', name: 'Smart Watch', sold: 83, revenue: '20760' },
+  { id: '4', name: 'Ultra HD Monitor', sold: 41, revenue: '14350' },
+  { id: '5', name: 'Bluetooth Speaker', sold: 74, revenue: '6670' },
 ];
