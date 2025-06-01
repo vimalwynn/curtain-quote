@@ -6,8 +6,8 @@ import { Calculator, FileText, Plus, Ruler, Dices, AlertCircle } from 'lucide-re
 import { formatCurrency } from '../utils/formatCurrency';
 
 interface CurtainMeasurements {
-  width: number;
-  height: number;
+  width: number; // stored in meters
+  height: number; // stored in meters
   fullness: number;
   style: 'wave' | 'pencilPleat';
   lining: 'standard' | 'blackout' | 'thermal';
@@ -49,6 +49,11 @@ const LINING_COSTS = {
 const LABOR_COST_PER_METER = 15;
 const HOOK_COST = 0.5;
 const TRACK_COST_PER_METER = 25;
+
+// Convert meters to centimeters
+const mToCm = (meters: number) => Math.round(meters * 100);
+// Convert centimeters to meters
+const cmToM = (cm: number) => cm / 100;
 
 export default function CreateQuotation() {
   const [items, setItems] = useState<QuotationItem[]>([]);
@@ -236,17 +241,16 @@ export default function CreateQuotation() {
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-2 sm:col-span-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Width (meters)
+                    Width (cm)
                   </label>
                   <input
                     type="number"
-                    step="0.1"
-                    value={currentItem.measurements.width || ''}
+                    value={mToCm(currentItem.measurements.width)}
                     onChange={(e) => setCurrentItem({
                       ...currentItem,
                       measurements: {
                         ...currentItem.measurements,
-                        width: parseFloat(e.target.value)
+                        width: cmToM(parseInt(e.target.value))
                       }
                     })}
                     className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
@@ -254,17 +258,16 @@ export default function CreateQuotation() {
                 </div>
                 <div className="col-span-2 sm:col-span-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Height (meters)
+                    Height (cm)
                   </label>
                   <input
                     type="number"
-                    step="0.1"
-                    value={currentItem.measurements.height || ''}
+                    value={mToCm(currentItem.measurements.height)}
                     onChange={(e) => setCurrentItem({
                       ...currentItem,
                       measurements: {
                         ...currentItem.measurements,
-                        height: parseFloat(e.target.value)
+                        height: cmToM(parseInt(e.target.value))
                       }
                     })}
                     className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
@@ -359,17 +362,16 @@ export default function CreateQuotation() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Pattern Repeat (meters)
+                  Pattern Repeat (cm)
                 </label>
                 <input
                   type="number"
-                  step="0.1"
-                  value={currentItem.fabric.patternRepeat || ''}
+                  value={currentItem.fabric.patternRepeat ? mToCm(currentItem.fabric.patternRepeat) : ''}
                   onChange={(e) => setCurrentItem({
                     ...currentItem,
                     fabric: {
                       ...currentItem.fabric,
-                      patternRepeat: parseFloat(e.target.value)
+                      patternRepeat: cmToM(parseInt(e.target.value))
                     }
                   })}
                   className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
@@ -416,7 +418,7 @@ export default function CreateQuotation() {
                   <div>
                     <h3 className="font-semibold text-lg">{item.fabric.name}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {item.measurements.width}m × {item.measurements.height}m - {item.measurements.style}
+                      {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm - {item.measurements.style}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {item.measurements.lining} lining - Quantity: {item.quantity}
@@ -502,7 +504,7 @@ export default function CreateQuotation() {
                     <div>
                       <h3 className="font-semibold">{item.fabric.name}</h3>
                       <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                        <p>Dimensions: {item.measurements.width}m × {item.measurements.height}m</p>
+                        <p>Dimensions: {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm</p>
                         <p>Style: {item.measurements.style}</p>
                         <p>Lining: {item.measurements.lining}</p>
                         <p>Quantity: {item.quantity}</p>
