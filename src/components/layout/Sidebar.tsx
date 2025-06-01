@@ -21,7 +21,6 @@ const navigation = [
 export default function Sidebar({ open, setOpen }: SidebarProps) {
   const location = useLocation();
   
-  // Close sidebar on route change on mobile
   useEffect(() => {
     if (open) {
       setOpen(false);
@@ -56,7 +55,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
               leaveTo="-translate-x-full"
             >
               <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1">
-                <div className="flex flex-col overflow-y-auto bg-white dark:bg-gray-950 px-6 pb-4 pt-5 shadow-xl ring-1 ring-gray-900/10 dark:ring-gray-800">
+                <div className="flex h-full flex-col overflow-y-auto bg-white dark:bg-gray-950 px-6 pb-4 pt-5 shadow-xl ring-1 ring-gray-900/10 dark:ring-gray-800">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Dashboard</h2>
                     <button
@@ -78,7 +77,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col overflow-y-auto bg-white dark:bg-gray-950 px-6 pb-4 pt-5 border-r border-gray-200 dark:border-gray-800">
+        <div className="flex h-full flex-col overflow-y-auto bg-white dark:bg-gray-950 px-6 pb-4 pt-5 border-r border-gray-200 dark:border-gray-800">
           <div className="flex items-center mb-8">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h2>
           </div>
