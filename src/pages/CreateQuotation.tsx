@@ -5,34 +5,100 @@ import Modal from '../components/ui/Modal';
 import { Save, FileText, Plus, AlertCircle, Calculator } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 
-// Constants
-const MOTORIZATION_OPTIONS = {
-  manual: { label: 'Manual', price: 0 },
-  normal: { label: 'Normal Motor', price: 20 },
-  tuya: { label: 'Tuya Smart Motor', price: 40 },
-  dooya: { label: 'Dooya Motor', price: 60 },
-} as const;
-
-const LINING_OPTIONS = {
-  none: { label: 'None', price: 0 },
-  standard: { label: 'Standard', price: 5 },
-  blackout: { label: 'Blackout', price: 8 },
-} as const;
-
 interface CurtainOption {
   id: string;
   name: string;
   code: string;
   price: number;
   image: string;
+  type: 'regular' | 'premium' | 'luxury';
+  minQuantity: number;
+  bulkDiscount?: {
+    quantity: number;
+    percentage: number;
+  }[];
+  availableStock: number;
+  processingOptions: {
+    id: string;
+    name: string;
+    price: number;
+  }[];
+  compatibleWith?: string[];
 }
 
-// Initial curtain options
 const initialCurtainOptions: CurtainOption[] = [
-  { id: '1', name: 'Premium Silk', code: 'PS001', price: 15.99, image: 'https://images.pexels.com/photos/1470171/pexels-photo-1470171.jpeg?auto=compress&cs=tinysrgb&w=100' },
-  { id: '2', name: 'Linen Blend', code: 'LB002', price: 12.99, image: 'https://images.pexels.com/photos/1939485/pexels-photo-1939485.jpeg?auto=compress&cs=tinysrgb&w=100' },
-  { id: '3', name: 'Velvet', code: 'VL003', price: 18.99, image: 'https://images.pexels.com/photos/1699970/pexels-photo-1699970.jpeg?auto=compress&cs=tinysrgb&w=100' },
+  {
+    id: '1',
+    name: 'Premium Silk',
+    code: 'PS001',
+    price: 15.99,
+    image: 'https://images.pexels.com/photos/1470171/pexels-photo-1470171.jpeg?auto=compress&cs=tinysrgb&w=100',
+    type: 'premium',
+    minQuantity: 2,
+    bulkDiscount: [
+      { quantity: 5, percentage: 5 },
+      { quantity: 10, percentage: 10 }
+    ],
+    availableStock: 150,
+    processingOptions: [
+      { id: 'p1', name: 'Standard Finish', price: 0 },
+      { id: 'p2', name: 'Anti-Wrinkle Treatment', price: 2.50 },
+      { id: 'p3', name: 'Stain Protection', price: 3.99 }
+    ],
+    compatibleWith: ['2', '3']
+  },
+  {
+    id: '2',
+    name: 'Linen Blend',
+    code: 'LB002',
+    price: 12.99,
+    image: 'https://images.pexels.com/photos/1939485/pexels-photo-1939485.jpeg?auto=compress&cs=tinysrgb&w=100',
+    type: 'regular',
+    minQuantity: 1,
+    bulkDiscount: [
+      { quantity: 8, percentage: 8 },
+      { quantity: 15, percentage: 15 }
+    ],
+    availableStock: 200,
+    processingOptions: [
+      { id: 'p1', name: 'Standard Finish', price: 0 },
+      { id: 'p4', name: 'UV Protection', price: 2.99 }
+    ],
+    compatibleWith: ['1', '3']
+  },
+  {
+    id: '3',
+    name: 'Velvet',
+    code: 'VL003',
+    price: 18.99,
+    image: 'https://images.pexels.com/photos/1699970/pexels-photo-1699970.jpeg?auto=compress&cs=tinysrgb&w=100',
+    type: 'luxury',
+    minQuantity: 2,
+    bulkDiscount: [
+      { quantity: 4, percentage: 7 },
+      { quantity: 8, percentage: 12 }
+    ],
+    availableStock: 100,
+    processingOptions: [
+      { id: 'p1', name: 'Standard Finish', price: 0 },
+      { id: 'p5', name: 'Flame Retardant', price: 4.99 },
+      { id: 'p6', name: 'Water Repellent', price: 3.50 }
+    ],
+    compatibleWith: ['1', '2']
+  }
 ];
+
+interface ProcessingSelection {
+  primaryProcessing: string[];
+  secondaryProcessing: string[];
+}
+
+interface CustomerDetails {
+  fullName: string;
+  contactNumber: string;
+  email: string;
+  address: string;
+}
 
 interface WindowTreatment {
   identifier: string;
@@ -48,24 +114,40 @@ interface WindowTreatment {
   };
   primaryFabric: string;
   secondaryFabric: string;
+  primaryProcessing: string[];
+  secondaryProcessing: string[];
   lining: keyof typeof LINING_OPTIONS;
   motorization: keyof typeof MOTORIZATION_OPTIONS;
   quantity: number;
   specialInstructions: string;
 }
 
-interface CustomerDetails {
-  fullName: string;
-  contactNumber: string;
-  email: string;
-  address: string;
-}
+const MOTORIZATION_OPTIONS = {
+  manual: { label: 'Manual', price: 0 },
+  normal: { label: 'Normal Motor', price: 20 },
+  tuya: { label: 'Tuya Smart Motor', price: 40 },
+  dooya: { label: 'Dooya Motor', price: 60 },
+} as const;
+
+const LINING_OPTIONS = {
+  none: { label: 'None', price: 0 },
+  standard: { label: 'Standard', price: 5 },
+  blackout: { label: 'Blackout', price: 8 },
+} as const;
 
 interface NewCurtainForm {
   name: string;
   code: string;
   price: number;
   image: string;
+  type: 'regular' | 'premium' | 'luxury';
+  minQuantity: number;
+  availableStock: number;
+  processingOptions: {
+    id: string;
+    name: string;
+    price: number;
+  }[];
 }
 
 export default function CreateQuotation() {
@@ -84,6 +166,8 @@ export default function CreateQuotation() {
     secondaryRail: { type: 'none', style: '' },
     primaryFabric: '',
     secondaryFabric: '',
+    primaryProcessing: [],
+    secondaryProcessing: [],
     lining: 'none',
     motorization: 'manual',
     quantity: 1,
@@ -98,6 +182,10 @@ export default function CreateQuotation() {
     code: '',
     price: 0,
     image: '',
+    type: 'regular',
+    minQuantity: 1,
+    availableStock: 0,
+    processingOptions: [],
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -106,26 +194,70 @@ export default function CreateQuotation() {
 
   const handleCustomRailAdd = () => {
     if (customRailOption.trim()) {
-      // Add custom rail option logic here
       setCustomRailOption('');
     }
+  };
+
+  const calculateBulkDiscount = (price: number, quantity: number, discounts?: { quantity: number; percentage: number }[]) => {
+    if (!discounts || discounts.length === 0) return price;
+    
+    const applicableDiscount = [...discounts]
+      .sort((a, b) => b.quantity - a.quantity)
+      .find(d => quantity >= d.quantity);
+    
+    if (!applicableDiscount) return price;
+    
+    return price * (1 - applicableDiscount.percentage / 100);
+  };
+
+  const calculateProcessingCost = (processingIds: string[], curtainOption: CurtainOption) => {
+    return processingIds.reduce((total, id) => {
+      const processing = curtainOption.processingOptions.find(p => p.id === id);
+      return total + (processing?.price || 0);
+    }, 0);
   };
 
   const calculateCosts = () => {
     const primaryFabric = curtainOptions.find(f => f.id === treatment.primaryFabric);
     const secondaryFabric = curtainOptions.find(f => f.id === treatment.secondaryFabric);
     
-    const fabricCost = ((primaryFabric?.price || 0) + (secondaryFabric?.price || 0)) * 
-      (treatment.width / 100) * (treatment.height / 100);
-    
+    let primaryCost = 0;
+    let secondaryCost = 0;
+
+    if (primaryFabric) {
+      const discountedPrice = calculateBulkDiscount(
+        primaryFabric.price,
+        treatment.quantity,
+        primaryFabric.bulkDiscount
+      );
+      const processingCost = calculateProcessingCost(
+        treatment.primaryProcessing,
+        primaryFabric
+      );
+      primaryCost = (discountedPrice + processingCost) * (treatment.width / 100) * (treatment.height / 100);
+    }
+
+    if (secondaryFabric) {
+      const discountedPrice = calculateBulkDiscount(
+        secondaryFabric.price,
+        treatment.quantity,
+        secondaryFabric.bulkDiscount
+      );
+      const processingCost = calculateProcessingCost(
+        treatment.secondaryProcessing,
+        secondaryFabric
+      );
+      secondaryCost = (discountedPrice + processingCost) * (treatment.width / 100) * (treatment.height / 100);
+    }
+
+    const fabricCost = (primaryCost + secondaryCost) * treatment.quantity;
     const liningCost = LINING_OPTIONS[treatment.lining].price * 
-      (treatment.width / 100) * (treatment.height / 100);
+      (treatment.width / 100) * (treatment.height / 100) * treatment.quantity;
     
-    const motorizationCost = MOTORIZATION_OPTIONS[treatment.motorization].price;
+    const motorizationCost = MOTORIZATION_OPTIONS[treatment.motorization].price * treatment.quantity;
+    const installationCost = 25 * treatment.quantity; // Base installation cost
     
-    const installationCost = 25; // Base installation cost
-    
-    const subtotal = (fabricCost + liningCost + motorizationCost + installationCost) * treatment.quantity;
+    const subtotal = fabricCost + liningCost + motorizationCost + installationCost;
     const vat = subtotal * 0.10;
     const total = subtotal + vat;
 
@@ -136,8 +268,20 @@ export default function CreateQuotation() {
       installationCost,
       subtotal,
       vat,
-      total
+      total,
+      breakdown: {
+        primary: primaryCost,
+        secondary: secondaryCost,
+        quantity: treatment.quantity,
+      }
     };
+  };
+
+  const validateMaterialCompatibility = () => {
+    if (!treatment.primaryFabric || !treatment.secondaryFabric) return true;
+    
+    const primaryFabric = curtainOptions.find(f => f.id === treatment.primaryFabric);
+    return primaryFabric?.compatibleWith?.includes(treatment.secondaryFabric) || false;
   };
 
   const handleRailTypeChange = (rail: 'primary' | 'secondary', type: string) => {
@@ -153,19 +297,30 @@ export default function CreateQuotation() {
     }));
   };
 
+  const handleProcessingChange = (
+    curtainType: 'primary' | 'secondary',
+    processingId: string,
+    checked: boolean
+  ) => {
+    setTreatment(prev => ({
+      ...prev,
+      [`${curtainType}Processing`]: checked
+        ? [...prev[`${curtainType}Processing`], processingId]
+        : prev[`${curtainType}Processing`].filter(id => id !== processingId)
+    }));
+  };
+
   const handleCalculate = () => {
     setIsCalculating(true);
     setTimeout(() => {
+      if (!validateMaterialCompatibility()) {
+        setError('Selected materials are not compatible');
+        setIsCalculating(false);
+        return;
+      }
+      setError(null);
       setIsCalculating(false);
     }, 1000);
-  };
-
-  const handleSave = () => {
-    // Save logic here
-  };
-
-  const handlePreview = () => {
-    // Preview logic here
   };
 
   const handleAddNewCurtain = (type: 'primary' | 'secondary') => {
@@ -175,6 +330,10 @@ export default function CreateQuotation() {
       code: '',
       price: 0,
       image: '',
+      type: 'regular',
+      minQuantity: 1,
+      availableStock: 0,
+      processingOptions: [],
     });
     setShowNewCurtainModal(true);
   };
@@ -183,6 +342,8 @@ export default function CreateQuotation() {
     const newCurtain: CurtainOption = {
       id: `${Date.now()}`,
       ...newCurtainForm,
+      bulkDiscount: [],
+      compatibleWith: [],
     };
     
     setCurtainOptions(prev => [...prev, newCurtain]);
@@ -192,6 +353,14 @@ export default function CreateQuotation() {
     }));
     
     setShowNewCurtainModal(false);
+  };
+
+  const handleSave = () => {
+    // Save logic here
+  };
+
+  const handlePreview = () => {
+    // Preview logic here
   };
 
   const costs = calculateCosts();
@@ -422,7 +591,7 @@ export default function CreateQuotation() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Fabric Selection</CardTitle>
+            <CardTitle>Material Selection</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
@@ -475,6 +644,29 @@ export default function CreateQuotation() {
                     </label>
                   ))}
                 </div>
+
+                {treatment.primaryFabric && (
+                  <div className="mt-4 space-y-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">Processing Options</h4>
+                    <div className="space-y-2">
+                      {curtainOptions
+                        .find(c => c.id === treatment.primaryFabric)
+                        ?.processingOptions.map(option => (
+                          <label key={option.id} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={treatment.primaryProcessing.includes(option.id)}
+                              onChange={(e) => handleProcessingChange('primary', option.id, e.target.checked)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700"
+                            />
+                            <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                              {option.name} {option.price > 0 && `(+${formatCurrency(option.price)})`}
+                            </span>
+                          </label>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -526,6 +718,29 @@ export default function CreateQuotation() {
                     </label>
                   ))}
                 </div>
+
+                {treatment.secondaryFabric && (
+                  <div className="mt-4 space-y-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">Processing Options</h4>
+                    <div className="space-y-2">
+                      {curtainOptions
+                        .find(c => c.id === treatment.secondaryFabric)
+                        ?.processingOptions.map(option => (
+                          <label key={option.id} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={treatment.secondaryProcessing.includes(option.id)}
+                              onChange={(e) => handleProcessingChange('secondary', option.id, e.target.checked)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700"
+                            />
+                            <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                              {option.name} {option.price > 0 && `(+${formatCurrency(option.price)})`}
+                            </span>
+                          </label>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -689,4 +904,107 @@ export default function CreateQuotation() {
             <input
               type="text"
               value={newCurtainForm.name}
-              onChange={(e) => setNew
+              onChange={(e) => setNewCurtainForm(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Code
+            </label>
+            <input
+              type="text"
+              value={newCurtainForm.code}
+              onChange={(e) => setNewCurtainForm(prev => ({ ...prev, code: e.target.value }))}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Price per Meter
+            </label>
+            <input
+              type="number"
+              step="0.001"
+              value={newCurtainForm.price}
+              onChange={(e) => setNewCurtainForm(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Image URL
+            </label>
+            <input
+              type="url"
+              value={newCurtainForm.image}
+              onChange={(e) => setNewCurtainForm(prev => ({ ...prev, image: e.target.value }))}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Type
+            </label>
+            <select
+              value={newCurtainForm.type}
+              onChange={(e) => setNewCurtainForm(prev => ({ ...prev, type: e.target.value as 'regular' | 'premium' | 'luxury' }))}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            >
+              <option value="regular">Regular</option>
+              <option value="premium">Premium</option>
+              <option value="luxury">Luxury</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Minimum Quantity
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={newCurtainForm.minQuantity}
+              onChange={(e) => setNewCurtainForm(prev => ({ ...prev, minQuantity: parseInt(e.target.value) }))}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Available Stock
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={newCurtainForm.availableStock}
+              onChange={(e) => setNewCurtainForm(prev => ({ ...prev, availableStock: parseInt(e.target.value) }))}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setShowNewCurtainModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveNewCurtain}
+            >
+              Add Curtain
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+export default CreateQuotation;
