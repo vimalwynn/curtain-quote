@@ -13,6 +13,8 @@ const MIN_DIMENSION = 50; // 50cm
 const MAX_DIMENSION = 1000; // 10m
 const MIN_WINDOWS = 1;
 const MAX_WINDOWS = 100;
+const DEFAULT_WIDTH = 300; // 300cm
+const DEFAULT_HEIGHT = 300; // 300cm
 
 const RAIL_TO_STYLE_MAPPING = {
   'wave': 'wave',
@@ -24,8 +26,8 @@ type StitchingStyle = typeof RAIL_TO_STYLE_MAPPING[RailType];
 
 export default function CurtainCalculator({ onCalculate }: CurtainCalculatorProps) {
   const [dimensions, setDimensions] = useState({
-    width: 300, // cm
-    height: 250, // cm
+    width: DEFAULT_WIDTH / 100, // convert to meters
+    height: DEFAULT_HEIGHT / 100, // convert to meters
     fullness: 3,
     fabricWidth: 'regular' as 'regular' | 'chiffon',
     railType: 'wave' as RailType,
