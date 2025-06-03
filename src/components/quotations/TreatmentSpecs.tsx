@@ -120,6 +120,18 @@ export default function TreatmentSpecs({ treatment, view }: TreatmentSpecsProps)
 
           <div>
             <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <Ruler className="h-4 w-4" />
+              Panel Layout
+            </h4>
+            <PanelVisualization
+              width={treatment.measurements.width}
+              height={treatment.measurements.height}
+              panelCalc={calculateOptimalPanels(treatment.measurements.width)}
+            />
+          </div>
+
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
               <Layers className="h-4 w-4" />
               Fabric & Materials
             </h4>
