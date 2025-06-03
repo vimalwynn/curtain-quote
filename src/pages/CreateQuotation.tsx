@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { Save, FileText, Plus, AlertCircle } from 'lucide-react';
+import Modal from '../components/ui/Modal';
+import { Save, FileText, Plus, AlertCircle, Download, Printer } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
+import QuotationPreview from '../components/quotations/QuotationPreview';
+import { generatePDF, printDocument } from '../utils/print';
 
-// Constants
 const MOTORIZATION_OPTIONS = {
   manual: { label: 'Manual', price: 0 },
   normal: { label: 'Normal Motor', price: 20 },
@@ -18,7 +20,6 @@ const LINING_OPTIONS = {
   blackout: { label: 'Blackout', price: 8 },
 } as const;
 
-// Mock fabric data - replace with actual data from your database
 const FABRICS = [
   { id: '1', name: 'Premium Silk', code: 'PS001', price: 15.99, image: 'https://images.pexels.com/photos/1470171/pexels-photo-1470171.jpeg?auto=compress&cs=tinysrgb&w=100' },
   { id: '2', name: 'Linen Blend', code: 'LB002', price: 12.99, image: 'https://images.pexels.com/photos/1939485/pexels-photo-1939485.jpeg?auto=compress&cs=tinysrgb&w=100' },
@@ -76,10 +77,10 @@ export default function CreateQuotation() {
 
   const [error, setError] = useState<string | null>(null);
   const [customRailOption, setCustomRailOption] = useState('');
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const handleCustomRailAdd = () => {
     if (customRailOption.trim()) {
-      // Add custom rail option logic here
       setCustomRailOption('');
     }
   };
@@ -96,7 +97,7 @@ export default function CreateQuotation() {
     
     const motorizationCost = MOTORIZATION_OPTIONS[treatment.motorization].price;
     
-    const installationCost = 25; // Base installation cost
+    const installationCost = 25;
     
     const subtotal = (fabricCost + liningCost + motorizationCost + installationCost) * treatment.quantity;
     const vat = subtotal * 0.10;
@@ -124,6 +125,58 @@ export default function CreateQuotation() {
         style
       }
     }));
+  };
+
+  const handlePreview = () => {
+    setShowPreviewModal(true);
+  };
+
+  const handlePrint = () => {
+    printDocument('quotationPreview');
+  };
+
+  const handleDownloadPDF = () => {
+    generatePDF('quotationPreview');
+  };
+
+  const getQuotationDetails = () => {
+    const primaryFabric = FABRICS.find(f => f.id === treatment.primaryFabric);
+    const secondaryFabric = FABRICS.find(f => f.id === treatment.secondaryFabric);
+
+    return {
+      number: `QT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+      date: new Date().toISOString(),
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'Draft' as const,
+      customer: {
+        name: customerDetails.fullName,
+        address: customerDetails.address,
+        phone: customerDetails.contactNumber,
+        email: customerDetails.email
+      },
+      items: [
+        {
+          id: '1',
+          description: `${treatment.identifier} - ${treatment.width}cm × ${treatment.height}cm\n` +
+            `${primaryFabric?.name || ''} ${secondaryFabric ? `+ ${secondaryFabric.name}` : ''}\n` +
+            `${treatment.primaryRail.style} ${treatment.secondaryRail.type !== 'none' ? `+ ${treatment.secondaryRail.style}` : ''}\n` +
+            `${LINING_OPTIONS[treatment.lining].label} Lining, ${MOTORIZATION_OPTIONS[treatment.motorization].label}`,
+          quantity: treatment.quantity,
+          unitPrice: costs.subtotal / treatment.quantity,
+          total: costs.subtotal
+        }
+      ],
+      subtotal: costs.subtotal,
+      tax: costs.vat,
+      total: costs.total,
+      notes: treatment.specialInstructions || undefined,
+      terms: [
+        '50% deposit required to confirm order',
+        'Delivery time: 2-3 weeks from confirmation',
+        'Price includes installation',
+        'Warranty: 1 year on hardware'
+      ]
+    };
   };
 
   const costs = calculateCosts();
@@ -554,6 +607,7 @@ export default function CreateQuotation() {
         <Button
           variant="outline"
           leftIcon={<FileText className="h-4 w-4" />}
+          onClick={handlePreview}
         >
           Preview Quote
         </Button>
@@ -564,6 +618,32 @@ export default function CreateQuotation() {
           Save Quote
         </Button>
       </div>
+
+      <Modal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        title="Quotation Preview"
+      >
+        <div className="space-y-6">
+          <div className="flex justify-end gap-2 mb-4">
+            <Button
+              variant="outline"
+              onClick={handlePrint}
+              leftIcon={<Printer className="h-4 w-4" />}
+            >
+              Print
+            </Button>
+            <Button
+              onClick={handleDownloadPDF}
+              leftIcon={<Download className="h-4 w-4" />}
+            >
+              Download PDF
+            </Button>
+          </div>
+
+          <QuotationPreview quotation={getQuotationDetails()} />
+        </div>
+      </Modal>
     </div>
   );
 }
