@@ -129,7 +129,7 @@ export default function CreateQuotation() {
       format: 'a4'
     });
     
-    const imgWidth = 210; // A4 width in mm
+    const imgWidth = 210;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
     pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
@@ -368,10 +368,7 @@ export default function CreateQuotation() {
     };
 
     try {
-      // Here you would typically save to your backend
       console.log('Saving quotation:', quotationData);
-      
-      // Show success message
       alert('Quotation saved successfully!');
     } catch (error) {
       setError('Failed to save quotation. Please try again.');
@@ -380,267 +377,282 @@ export default function CreateQuotation() {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Curtain Quotation</h1>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowCalculationModal(true)} leftIcon={<Calculator className="h-4 w-4" />}>
-            Calculate
-          </Button>
-          <Button onClick={() => setShowPreviewModal(true)} leftIcon={<FileText className="h-4 w-4" />}>
-            Preview
-          </Button>
-          <Button 
-            variant="modern"
-            onClick={handleSaveQuotation}
-            leftIcon={<Save className="h-4 w-4" />}
-          >
-            Save Quotation
-          </Button>
+    <div className="flex flex-col min-h-full">
+      <div className="flex-1 max-w-[1400px] mx-auto space-y-6 p-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Curtain Quotation</h1>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-4">
+            <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
+              <AlertCircle className="h-5 w-5" />
+              <p>{error}</p>
+            </div>
+          </div>
+        )}
+
+        <Card>
+          <div className="p-8 space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              <div className="space-y-6">
+                <h3 className="text-xl font-semibold flex items-center gap-2">
+                  <Ruler className="h-6 w-6" />
+                  Measurements
+                </h3>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Room/Window Name
+                  </label>
+                  <input
+                    type="text"
+                    value={currentItem.roomName}
+                    onChange={(e) => setCurrentItem({
+                      ...currentItem,
+                      roomName: e.target.value
+                    })}
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Width (cm)
+                    </label>
+                    <input
+                      type="number"
+                      value={mToCm(currentItem.measurements.width)}
+                      onChange={(e) => setCurrentItem({
+                        ...currentItem,
+                        measurements: {
+                          ...currentItem.measurements,
+                          width: cmToM(parseInt(e.target.value))
+                        }
+                      })}
+                      className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                    />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Height (cm)
+                    </label>
+                    <input
+                      type="number"
+                      value={mToCm(currentItem.measurements.height)}
+                      onChange={(e) => setCurrentItem({
+                        ...currentItem,
+                        measurements: {
+                          ...currentItem.measurements,
+                          height: cmToM(parseInt(e.target.value))
+                        }
+                      })}
+                      className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Style
+                  </label>
+                  <select
+                    value={currentItem.measurements.style}
+                    onChange={(e) => setCurrentItem({
+                      ...currentItem,
+                      measurements: {
+                        ...currentItem.measurements,
+                        style: e.target.value as 'wave' | 'pencilPleat',
+                        fullness: FULLNESS_RATIOS[e.target.value as 'wave' | 'pencilPleat'][currentItem.measurements.railType]
+                      }
+                    })}
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  >
+                    <option value="wave">Wave</option>
+                    <option value="pencilPleat">Pencil Pleat</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Rail Type
+                  </label>
+                  <select
+                    value={currentItem.measurements.railType}
+                    onChange={(e) => setCurrentItem({
+                      ...currentItem,
+                      measurements: {
+                        ...currentItem.measurements,
+                        railType: e.target.value as 'standard' | 'deluxe' | 'motorized',
+                        fullness: FULLNESS_RATIOS[currentItem.measurements.style][e.target.value as 'standard' | 'deluxe' | 'motorized']
+                      }
+                    })}
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  >
+                    <option value="standard">Standard Rail</option>
+                    <option value="deluxe">Deluxe Rail</option>
+                    <option value="motorized">Motorized Rail</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Lining
+                  </label>
+                  <select
+                    value={currentItem.measurements.lining}
+                    onChange={(e) => setCurrentItem({
+                      ...currentItem,
+                      measurements: {
+                        ...currentItem.measurements,
+                        lining: e.target.value as 'none' | 'standard' | 'blackout' | 'thermal'
+                      }
+                    })}
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  >
+                    <option value="none">No Lining</option>
+                    <option value="standard">Standard</option>
+                    <option value="blackout">Blackout</option>
+                    <option value="thermal">Thermal</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-xl font-semibold flex items-center gap-2">
+                  <Dices className="h-6 w-6" />
+                  Fabric Details
+                </h3>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Front Layer Fabric
+                  </label>
+                  <select
+                    value={currentItem.frontLayer.name ? fabrics.find(f => f.name === currentItem.frontLayer.name)?.id || '' : ''}
+                    onChange={(e) => handleFabricSelect(e.target.value, 'front')}
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                  >
+                    <option value="">Select a fabric</option>
+                    {fabrics.map(fabric => (
+                      <option key={fabric.id} value={fabric.id}>
+                        {fabric.name} - {formatCurrency(fabric.price)} per meter
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Second Layer Fabric (Optional)
+                  </label>
+                  <select
+                    value={currentItem.secondLayer ? fabrics.find(f => f.name === currentItem.secondLayer.name)?.id || 'none' : 'none'}
+                    onChange={(e) => handleFabricSelect(e.target.value, 'second')}
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                  >
+                    <option value="none">No second layer</option>
+                    {fabrics.map(fabric => (
+                      <option key={fabric.id} value={fabric.id}>
+                        {fabric.name} - {formatCurrency(fabric.price)} per meter
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={currentItem.quantity}
+                    onChange={(e) => setCurrentItem({
+                      ...currentItem,
+                      quantity: parseInt(e.target.value)
+                    })}
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Button 
+                onClick={handleAddItem} 
+                leftIcon={<Plus className="h-4 w-4" />}
+                size="lg"
+              >
+                Add to Quote
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        <div className="space-y-4">
+          {items.map((item, index) => {
+            const costs = calculateItemCost(item);
+            return (
+              <Card key={index} className="p-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-lg">{item.roomName}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Front Layer: {item.frontLayer.name}
+                      </p>
+                      {item.secondLayer && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Second Layer: {item.secondLayer.name}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm - {item.measurements.style}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {item.measurements.lining} lining - Quantity: {item.quantity}
+                      </p>
+                    </div>
+                    <p className="font-semibold text-lg">
+                      {formatCurrency(costs.total * item.quantity)}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md p-4">
-          <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
-            <AlertCircle className="h-5 w-5" />
-            <p>{error}</p>
-          </div>
-        </div>
-      )}
-
-      <Card>
-        <div className="p-8 space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold flex items-center gap-2">
-                <Ruler className="h-6 w-6" />
-                Measurements
-              </h3>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Room/Window Name
-                </label>
-                <input
-                  type="text"
-                  value={currentItem.roomName}
-                  onChange={(e) => setCurrentItem({
-                    ...currentItem,
-                    roomName: e.target.value
-                  })}
-                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Width (cm)
-                  </label>
-                  <input
-                    type="number"
-                    value={mToCm(currentItem.measurements.width)}
-                    onChange={(e) => setCurrentItem({
-                      ...currentItem,
-                      measurements: {
-                        ...currentItem.measurements,
-                        width: cmToM(parseInt(e.target.value))
-                      }
-                    })}
-                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
-                  />
-                </div>
-                <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Height (cm)
-                  </label>
-                  <input
-                    type="number"
-                    value={mToCm(currentItem.measurements.height)}
-                    onChange={(e) => setCurrentItem({
-                      ...currentItem,
-                      measurements: {
-                        ...currentItem.measurements,
-                        height: cmToM(parseInt(e.target.value))
-                      }
-                    })}
-                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Style
-                </label>
-                <select
-                  value={currentItem.measurements.style}
-                  onChange={(e) => setCurrentItem({
-                    ...currentItem,
-                    measurements: {
-                      ...currentItem.measurements,
-                      style: e.target.value as 'wave' | 'pencilPleat',
-                      fullness: FULLNESS_RATIOS[e.target.value as 'wave' | 'pencilPleat'][currentItem.measurements.railType]
-                    }
-                  })}
-                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
-                >
-                  <option value="wave">Wave</option>
-                  <option value="pencilPleat">Pencil Pleat</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Rail Type
-                </label>
-                <select
-                  value={currentItem.measurements.railType}
-                  onChange={(e) => setCurrentItem({
-                    ...currentItem,
-                    measurements: {
-                      ...currentItem.measurements,
-                      railType: e.target.value as 'standard' | 'deluxe' | 'motorized',
-                      fullness: FULLNESS_RATIOS[currentItem.measurements.style][e.target.value as 'standard' | 'deluxe' | 'motorized']
-                    }
-                  })}
-                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
-                >
-                  <option value="standard">Standard Rail</option>
-                  <option value="deluxe">Deluxe Rail</option>
-                  <option value="motorized">Motorized Rail</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Lining
-                </label>
-                <select
-                  value={currentItem.measurements.lining}
-                  onChange={(e) => setCurrentItem({
-                    ...currentItem,
-                    measurements: {
-                      ...currentItem.measurements,
-                      lining: e.target.value as 'none' | 'standard' | 'blackout' | 'thermal'
-                    }
-                  })}
-                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
-                >
-                  <option value="none">No Lining</option>
-                  <option value="standard">Standard</option>
-                  <option value="blackout">Blackout</option>
-                  <option value="thermal">Thermal</option>
-                </select>
-              </div>
+      <footer className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-lg">
+        <div className="max-w-[1400px] mx-auto px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => setShowCalculationModal(true)} 
+                leftIcon={<Calculator className="h-4 w-4" />}
+              >
+                Calculate
+              </Button>
+              <Button 
+                onClick={() => setShowPreviewModal(true)} 
+                leftIcon={<FileText className="h-4 w-4" />}
+              >
+                Preview
+              </Button>
             </div>
-
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold flex items-center gap-2">
-                <Dices className="h-6 w-6" />
-                Fabric Details
-              </h3>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Front Layer Fabric
-                </label>
-                <select
-                  value={currentItem.frontLayer.name ? fabrics.find(f => f.name === currentItem.frontLayer.name)?.id || '' : ''}
-                  onChange={(e) => handleFabricSelect(e.target.value, 'front')}
-                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                >
-                  <option value="">Select a fabric</option>
-                  {fabrics.map(fabric => (
-                    <option key={fabric.id} value={fabric.id}>
-                      {fabric.name} - {formatCurrency(fabric.price)} per meter
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Second Layer Fabric (Optional)
-                </label>
-                <select
-                  value={currentItem.secondLayer ? fabrics.find(f => f.name === currentItem.secondLayer.name)?.id || 'none' : 'none'}
-                  onChange={(e) => handleFabricSelect(e.target.value, 'second')}
-                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                >
-                  <option value="none">No second layer</option>
-                  {fabrics.map(fabric => (
-                    <option key={fabric.id} value={fabric.id}>
-                      {fabric.name} - {formatCurrency(fabric.price)} per meter
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Quantity
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={currentItem.quantity}
-                  onChange={(e) => setCurrentItem({
-                    ...currentItem,
-                    quantity: parseInt(e.target.value)
-                  })}
-                  className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-4">
             <Button 
-              onClick={handleAddItem} 
-              leftIcon={<Plus className="h-4 w-4" />}
-              size="lg"
+              variant="modern"
+              onClick={handleSaveQuotation}
+              leftIcon={<Save className="h-4 w-4" />}
             >
-              Add to Quote
+              Save Quotation
             </Button>
           </div>
         </div>
-      </Card>
-
-      <div className="space-y-4">
-        {items.map((item, index) => {
-          const costs = calculateItemCost(item);
-          return (
-            <Card key={index} className="p-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-lg">{item.roomName}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Front Layer: {item.frontLayer.name}
-                    </p>
-                    {item.secondLayer && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Second Layer: {item.secondLayer.name}
-                      </p>
-                    )}
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {mToCm(item.measurements.width)}cm × {mToCm(item.measurements.height)}cm - {item.measurements.style}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {item.measurements.lining} lining - Quantity: {item.quantity}
-                    </p>
-                  </div>
-                  <p className="font-semibold text-lg">
-                    {formatCurrency(costs.total * item.quantity)}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+      </footer>
 
       <Modal
         isOpen={showCalculationModal}
@@ -754,7 +766,7 @@ export default function CreateQuotation() {
             </Button>
             <Button
               onClick={generatePDF}
-              leftIcon={<Download className="h-4 w-4" />}
+              leftIcon={<Download className="h-4  w-4" />}
             >
               Download PDF
             </Button>
@@ -764,8 +776,7 @@ export default function CreateQuotation() {
             <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
               <h2 className="text-xl font-bold mb-2">Curtain Quotation</h2>
               <p className="text-gray-600">Date: {new Date().toLocaleDateString()}</p>
-              <p className="text-gray-600">Quote #: QT-{new Date().getFullYear()}-{String(Math.floor(Math.random() *
-1000)).padStart(3, '0')}</p>
+              <p className="text-gray-600">Quote #: QT-{new Date().getFullYear()}-{String(Math.floor(Math.random() * 1000)).padStart(3, '0')}</p>
             </div>
 
             <div className="space-y-6">
