@@ -604,5 +604,3 @@ export default function CreateQuotation() {
     </div>
   );
 }
-
-export default CreateQuotation
