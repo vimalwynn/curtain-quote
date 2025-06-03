@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import { Calculator, FileText, Plus, Ruler, Dices, AlertCircle, Download, Printer } from 'lucide-react';
+import { Calculator, FileText, Plus, Ruler, Dices, AlertCircle, Download, Printer, Save } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 import { products } from '../data/mockData';
 import jsPDF from 'jspdf';
@@ -352,6 +352,33 @@ export default function CreateQuotation() {
     }, 0);
   };
 
+  const handleSaveQuotation = async () => {
+    if (items.length === 0) {
+      setError('Add at least one item to save the quotation');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
+    const quotationData = {
+      id: `QT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+      date: new Date().toISOString(),
+      items,
+      total: calculateTotal(),
+      status: 'Draft' as const
+    };
+
+    try {
+      // Here you would typically save to your backend
+      console.log('Saving quotation:', quotationData);
+      
+      // Show success message
+      alert('Quotation saved successfully!');
+    } catch (error) {
+      setError('Failed to save quotation. Please try again.');
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -362,6 +389,13 @@ export default function CreateQuotation() {
           </Button>
           <Button onClick={() => setShowPreviewModal(true)} leftIcon={<FileText className="h-4 w-4" />}>
             Preview
+          </Button>
+          <Button 
+            variant="modern"
+            onClick={handleSaveQuotation}
+            leftIcon={<Save className="h-4 w-4" />}
+          >
+            Save Quotation
           </Button>
         </div>
       </div>
@@ -730,7 +764,8 @@ export default function CreateQuotation() {
             <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
               <h2 className="text-xl font-bold mb-2">Curtain Quotation</h2>
               <p className="text-gray-600">Date: {new Date().toLocaleDateString()}</p>
-              <p className="text-gray-600">Quote #: QT-{new Date().getFullYear()}-{String(Math.floor(Math.random() * 1000)).padStart(3, '0')}</p>
+              <p className="text-gray-600">Quote #: QT-{new Date().getFullYear()}-{String(Math.floor(Math.random() *
+1000)).padStart(3, '0')}</p>
             </div>
 
             <div className="space-y-6">
