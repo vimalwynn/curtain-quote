@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { products } from '../data/mockData';
 import DataTable from '../components/ui/DataTable';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import { Package, Plus, Filter, Search, Star, MoreHorizontal, Edit, Trash2, Save } from 'lucide-react';
+import { Package, Plus, Filter, Search, Star, MoreHorizontal, Edit, Trash2, Save, FileText } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 
 interface Product {
@@ -16,6 +17,7 @@ interface Product {
 }
 
 export default function Products() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [productList, setProductList] = useState<Product[]>(products);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -33,6 +35,10 @@ export default function Products() {
     
     return matchesSearch && matchesCategory;
   });
+
+  const handleCreateQuote = (product: Product) => {
+    navigate(`/quotations/create?productId=${product.id}`);
+  };
 
   const handleEdit = (product: Product) => {
     setEditingProduct({ ...product });
@@ -68,7 +74,7 @@ export default function Products() {
     
     if (hasHalfStar) {
       stars.push(
-        <Star key="half\" className="h-4 w-4 text-amber-400" />
+        <Star key="half" className="h-4 w-4 text-amber-400" />
       );
     }
     
@@ -93,7 +99,10 @@ export default function Products() {
       header: 'Product', 
       sortable: true,
       render: (product: Product) => (
-        <div className="flex items-center">
+        <button
+          onClick={() => handleCreateQuote(product)}
+          className="flex items-center hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-md transition-colors w-full text-left"
+        >
           <div className="h-10 w-10 flex-shrink-0 rounded-md bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
             <Package className="h-5 w-5 text-gray-500 dark:text-gray-400" />
           </div>
@@ -101,7 +110,7 @@ export default function Products() {
             <div className="font-medium text-gray-900 dark:text-white">{product.name}</div>
             <div className="text-gray-500 dark:text-gray-400 text-xs">{product.category}</div>
           </div>
-        </div>
+        </button>
       )
     },
     { 
@@ -141,6 +150,13 @@ export default function Products() {
       header: 'Actions',
       render: (product: Product) => (
         <div className="flex space-x-2">
+          <button 
+            className="rounded-md p-1 text-gray-500 hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
+            onClick={() => handleCreateQuote(product)}
+            title="Create Quote"
+          >
+            <FileText className="h-4 w-4" />
+          </button>
           <button 
             className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300"
             onClick={() => handleEdit(product)}
