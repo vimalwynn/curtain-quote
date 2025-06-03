@@ -145,8 +145,8 @@ export default function CreateQuotation() {
   const costs = calculateCosts();
 
   return (
-    <div className="pb-24">
-      <div className="max-w-7xl mx-auto py-6 space-y-6">
+    <div className="flex flex-col min-h-screen pb-[4.5rem] md:pb-[4rem]">
+      <div className="flex-grow max-w-7xl mx-auto w-full py-6 space-y-6 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create Window Treatment Quote</h1>
         </div>
@@ -568,9 +568,9 @@ export default function CreateQuotation() {
         </Card>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 py-4 px-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 py-4 px-6 z-10">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-4 w-full sm:w-auto">
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Total: <span className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(costs.total)}</span>
             </div>
@@ -583,11 +583,12 @@ export default function CreateQuotation() {
               Calculate
             </Button>
           </div>
-          <div className="flex space-x-4">
+          <div className="flex space-x-4 w-full sm:w-auto">
             <Button
               variant="outline"
               leftIcon={<FileText className="h-4 w-4" />}
               onClick={handlePreview}
+              className="flex-1 sm:flex-none"
             >
               Preview Quote
             </Button>
@@ -595,6 +596,7 @@ export default function CreateQuotation() {
               variant="modern"
               leftIcon={<Save className="h-4 w-4" />}
               onClick={handleSave}
+              className="flex-1 sm:flex-none"
             >
               Save Quote
             </Button>

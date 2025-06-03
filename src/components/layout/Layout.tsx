@@ -19,10 +19,8 @@ export default function Layout({ children, sidebarOpen, setSidebarOpen }: Layout
       <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         <Header setSidebarOpen={setSidebarOpen} sidebarOpen={sidebarOpen} />
         
-        <main className="flex-1 overflow-y-auto focus:outline-none py-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-            {children}
-          </div>
+        <main className="flex-1 overflow-y-auto focus:outline-none">
+          {children}
         </main>
       </div>
     </div>
