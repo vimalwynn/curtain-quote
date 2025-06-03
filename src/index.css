@@ -3,15 +3,20 @@
 @tailwind utilities;
 
 @media print {
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+
   body * {
     visibility: hidden;
   }
   
-  #quotationRef, #quotationRef * {
+  #quotationPreview, #quotationPreview * {
     visibility: visible;
   }
   
-  #quotationRef {
+  #quotationPreview {
     position: absolute;
     left: 0;
     top: 0;
@@ -21,4 +26,32 @@
   .no-print {
     display: none !important;
   }
+
+  /* Ensure text colors are readable when printed */
+  .dark\:text-white {
+    color: #000 !important;
+  }
+  
+  .dark\:text-gray-400 {
+    color: #4B5563 !important;
+  }
+  
+  .dark\:bg-gray-900 {
+    background-color: #fff !important;
+  }
+  
+  /* Ensure borders are visible */
+  .dark\:border-gray-800 {
+    border-color: #E5E7EB !important;
+  }
+}
+
+/* Print preview styles */
+body.is-printing * {
+  visibility: hidden;
+}
+
+body.is-printing #quotationPreview,
+body.is-printing #quotationPreview * {
+  visibility: visible;
 }
