@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
 import { Save, FileText, Plus, AlertCircle, Calculator } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 
@@ -18,8 +19,16 @@ const LINING_OPTIONS = {
   blackout: { label: 'Blackout', price: 8 },
 } as const;
 
-// Mock fabric data - replace with actual data from your database
-const FABRICS = [
+interface CurtainOption {
+  id: string;
+  name: string;
+  code: string;
+  price: number;
+  image: string;
+}
+
+// Initial curtain options
+const initialCurtainOptions: CurtainOption[] = [
   { id: '1', name: 'Premium Silk', code: 'PS001', price: 15.99, image: 'https://images.pexels.com/photos/1470171/pexels-photo-1470171.jpeg?auto=compress&cs=tinysrgb&w=100' },
   { id: '2', name: 'Linen Blend', code: 'LB002', price: 12.99, image: 'https://images.pexels.com/photos/1939485/pexels-photo-1939485.jpeg?auto=compress&cs=tinysrgb&w=100' },
   { id: '3', name: 'Velvet', code: 'VL003', price: 18.99, image: 'https://images.pexels.com/photos/1699970/pexels-photo-1699970.jpeg?auto=compress&cs=tinysrgb&w=100' },
@@ -52,6 +61,13 @@ interface CustomerDetails {
   address: string;
 }
 
+interface NewCurtainForm {
+  name: string;
+  code: string;
+  price: number;
+  image: string;
+}
+
 export default function CreateQuotation() {
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
     fullName: '',
@@ -74,6 +90,16 @@ export default function CreateQuotation() {
     specialInstructions: '',
   });
 
+  const [curtainOptions, setCurtainOptions] = useState<CurtainOption[]>(initialCurtainOptions);
+  const [showNewCurtainModal, setShowNewCurtainModal] = useState(false);
+  const [newCurtainType, setNewCurtainType] = useState<'primary' | 'secondary'>('primary');
+  const [newCurtainForm, setNewCurtainForm] = useState<NewCurtainForm>({
+    name: '',
+    code: '',
+    price: 0,
+    image: '',
+  });
+
   const [error, setError] = useState<string | null>(null);
   const [customRailOption, setCustomRailOption] = useState('');
   const [isCalculating, setIsCalculating] = useState(false);
@@ -86,8 +112,8 @@ export default function CreateQuotation() {
   };
 
   const calculateCosts = () => {
-    const primaryFabric = FABRICS.find(f => f.id === treatment.primaryFabric);
-    const secondaryFabric = FABRICS.find(f => f.id === treatment.secondaryFabric);
+    const primaryFabric = curtainOptions.find(f => f.id === treatment.primaryFabric);
+    const secondaryFabric = curtainOptions.find(f => f.id === treatment.secondaryFabric);
     
     const fabricCost = ((primaryFabric?.price || 0) + (secondaryFabric?.price || 0)) * 
       (treatment.width / 100) * (treatment.height / 100);
@@ -140,6 +166,32 @@ export default function CreateQuotation() {
 
   const handlePreview = () => {
     // Preview logic here
+  };
+
+  const handleAddNewCurtain = (type: 'primary' | 'secondary') => {
+    setNewCurtainType(type);
+    setNewCurtainForm({
+      name: '',
+      code: '',
+      price: 0,
+      image: '',
+    });
+    setShowNewCurtainModal(true);
+  };
+
+  const handleSaveNewCurtain = () => {
+    const newCurtain: CurtainOption = {
+      id: `${Date.now()}`,
+      ...newCurtainForm,
+    };
+    
+    setCurtainOptions(prev => [...prev, newCurtain]);
+    setTreatment(prev => ({
+      ...prev,
+      [newCurtainType === 'primary' ? 'primaryFabric' : 'secondaryFabric']: newCurtain.id,
+    }));
+    
+    setShowNewCurtainModal(false);
   };
 
   const costs = calculateCosts();
@@ -375,15 +427,25 @@ export default function CreateQuotation() {
           <CardContent>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Primary Curtain *
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Primary Curtain *
+                  </label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    leftIcon={<Plus className="h-4 w-4" />}
+                    onClick={() => handleAddNewCurtain('primary')}
+                  >
+                    Add New
+                  </Button>
+                </div>
                 <div className="grid grid-cols-1 gap-4">
-                  {FABRICS.map(fabric => (
+                  {curtainOptions.map(curtain => (
                     <label
-                      key={fabric.id}
+                      key={curtain.id}
                       className={`relative flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
-                        treatment.primaryFabric === fabric.id
+                        treatment.primaryFabric === curtain.id
                           ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                           : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
@@ -391,22 +453,22 @@ export default function CreateQuotation() {
                       <input
                         type="radio"
                         name="primaryFabric"
-                        value={fabric.id}
-                        checked={treatment.primaryFabric === fabric.id}
+                        value={curtain.id}
+                        checked={treatment.primaryFabric === curtain.id}
                         onChange={(e) => setTreatment(prev => ({ ...prev, primaryFabric: e.target.value }))}
                         className="sr-only"
                       />
                       <div className="flex items-center gap-4">
                         <img
-                          src={fabric.image}
-                          alt={fabric.name}
+                          src={curtain.image}
+                          alt={curtain.name}
                           className="w-16 h-16 object-cover rounded"
                         />
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{fabric.name}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Code: {fabric.code}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{curtain.name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Code: {curtain.code}</p>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {formatCurrency(fabric.price)}/meter
+                            {formatCurrency(curtain.price)}/meter
                           </p>
                         </div>
                       </div>
@@ -416,15 +478,25 @@ export default function CreateQuotation() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Secondary Curtain
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Secondary Curtain
+                  </label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    leftIcon={<Plus className="h-4 w-4" />}
+                    onClick={() => handleAddNewCurtain('secondary')}
+                  >
+                    Add New
+                  </Button>
+                </div>
                 <div className="grid grid-cols-1 gap-4">
-                  {FABRICS.map(fabric => (
+                  {curtainOptions.map(curtain => (
                     <label
-                      key={fabric.id}
+                      key={curtain.id}
                       className={`relative flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
-                        treatment.secondaryFabric === fabric.id
+                        treatment.secondaryFabric === curtain.id
                           ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                           : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
@@ -432,22 +504,22 @@ export default function CreateQuotation() {
                       <input
                         type="radio"
                         name="secondaryFabric"
-                        value={fabric.id}
-                        checked={treatment.secondaryFabric === fabric.id}
+                        value={curtain.id}
+                        checked={treatment.secondaryFabric === curtain.id}
                         onChange={(e) => setTreatment(prev => ({ ...prev, secondaryFabric: e.target.value }))}
                         className="sr-only"
                       />
                       <div className="flex items-center gap-4">
                         <img
-                          src={fabric.image}
-                          alt={fabric.name}
+                          src={curtain.image}
+                          alt={curtain.name}
                           className="w-16 h-16 object-cover rounded"
                         />
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{fabric.name}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">Code: {fabric.code}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{curtain.name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Code: {curtain.code}</p>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {formatCurrency(fabric.price)}/meter
+                            {formatCurrency(curtain.price)}/meter
                           </p>
                         </div>
                       </div>
@@ -603,6 +675,18 @@ export default function CreateQuotation() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+
+      <Modal
+        isOpen={showNewCurtainModal}
+        onClose={() => setShowNewCurtainModal(false)}
+        title={`Add New ${newCurtainType === 'primary' ? 'Primary' : 'Secondary'} Curtain`}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Curtain Name
+            </label>
+            <input
+              type="text"
+              value={newCurtainForm.name}
+              onChange={(e) => setNew
