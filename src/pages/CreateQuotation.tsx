@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import { Calculator, FileText, Plus, Ruler, Dices, AlertCircle, Download, Printer, Save } from 'lucide-react';
+import { Calculator, FileText, Plus, Ruler, Dices, AlertCircle, Download, Printer, Save, User } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 import { products } from '../data/mockData';
+import { saveQuotation } from '../utils/supabase';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -112,6 +113,13 @@ export default function CreateQuotation() {
     accessories: {
       tracks: 0
     }
+  });
+
+  const [customerDetails, setCustomerDetails] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
   });
 
   const generatePDF = async () => {
@@ -359,19 +367,34 @@ export default function CreateQuotation() {
       return;
     }
 
-    const quotationData = {
-      id: `QT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-      date: new Date().toISOString(),
-      items,
-      total: calculateTotal(),
-      status: 'Draft' as const
-    };
+    if (!customerDetails.name.trim()) {
+      setError('Customer name is required');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
 
     try {
-      console.log('Saving quotation:', quotationData);
+      const quotationData = {
+        number: `QT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+        date: new Date().toISOString(),
+        customer_name: customerDetails.name,
+        customer_email: customerDetails.email || null,
+        customer_phone: customerDetails.phone || null,
+        customer_address: customerDetails.address || null,
+        items,
+        subtotal: calculateTotal() * 0.9, // Assuming 10% tax
+        tax: calculateTotal() * 0.1,
+        total: calculateTotal(),
+        status: 'Draft' as const,
+        valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days validity
+        notes: null
+      };
+
+      await saveQuotation(quotationData);
       alert('Quotation saved successfully!');
     } catch (error) {
       setError('Failed to save quotation. Please try again.');
+      console.error('Error saving quotation:', error);
       setTimeout(() => setError(null), 3000);
     }
   };
@@ -394,6 +417,63 @@ export default function CreateQuotation() {
 
         <Card>
           <div className="p-8 space-y-8">
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold flex items-center gap-2">
+                <User className="h-6 w-6" />
+                Customer Details
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Customer Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={customerDetails.name}
+                    onChange={(e) => setCustomerDetails(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={customerDetails.email}
+                    onChange={(e) => setCustomerDetails(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={customerDetails.phone}
+                    onChange={(e) => setCustomerDetails(prev => ({ ...prev, phone: e.target.value }))}
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Address
+                  </label>
+                  <textarea
+                    value={customerDetails.address}
+                    onChange={(e) => setCustomerDetails(prev => ({ ...prev, address: e.target.value }))}
+                    className="w-full h-24 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               <div className="space-y-6">
                 <h3 className="text-xl font-semibold flex items-center gap-2">
