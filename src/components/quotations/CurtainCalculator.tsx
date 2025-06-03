@@ -14,13 +14,22 @@ const MAX_DIMENSION = 1000; // 10m
 const MIN_WINDOWS = 1;
 const MAX_WINDOWS = 100;
 
+const RAIL_TO_STYLE_MAPPING = {
+  'wave': 'wave',
+  'easyMovable': 'pencilPleat'
+} as const;
+
+type RailType = keyof typeof RAIL_TO_STYLE_MAPPING;
+type StitchingStyle = typeof RAIL_TO_STYLE_MAPPING[RailType];
+
 export default function CurtainCalculator({ onCalculate }: CurtainCalculatorProps) {
   const [dimensions, setDimensions] = useState({
     width: 300, // cm
     height: 250, // cm
     fullness: 3,
     fabricWidth: 'regular' as 'regular' | 'chiffon',
-    style: 'wave' as 'wave' | 'pencilPleat' | 'american',
+    railType: 'wave' as RailType,
+    style: RAIL_TO_STYLE_MAPPING['wave'] as StitchingStyle,
     windows: 1,
     hasPattern: false
   });
@@ -77,9 +86,18 @@ export default function CurtainCalculator({ onCalculate }: CurtainCalculatorProp
     }
   };
 
-  const handleDimensionChange = (field: keyof typeof dimensions, value: number | string) => {
-    setDimensions(prev => ({ ...prev, [field]: value }));
-    setError(null); // Clear error when input changes
+  const handleDimensionChange = (field: keyof typeof dimensions, value: number | string | boolean) => {
+    if (field === 'railType') {
+      const railType = value as RailType;
+      setDimensions(prev => ({
+        ...prev,
+        [field]: railType,
+        style: RAIL_TO_STYLE_MAPPING[railType]
+      }));
+    } else {
+      setDimensions(prev => ({ ...prev, [field]: value }));
+    }
+    setError(null);
   };
 
   return (
@@ -112,7 +130,7 @@ export default function CurtainCalculator({ onCalculate }: CurtainCalculatorProp
                 max={MAX_DIMENSION}
                 value={dimensions.width}
                 onChange={(e) => handleDimensionChange('width', Number(e.target.value))}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
 
@@ -126,7 +144,7 @@ export default function CurtainCalculator({ onCalculate }: CurtainCalculatorProp
                 max={MAX_DIMENSION}
                 value={dimensions.height}
                 onChange={(e) => handleDimensionChange('height', Number(e.target.value))}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
 
@@ -137,7 +155,7 @@ export default function CurtainCalculator({ onCalculate }: CurtainCalculatorProp
               <select
                 value={dimensions.fullness}
                 onChange={(e) => handleDimensionChange('fullness', Number(e.target.value))}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               >
                 <option value={1.5}>1.5x</option>
                 <option value={2}>2x</option>
@@ -153,7 +171,7 @@ export default function CurtainCalculator({ onCalculate }: CurtainCalculatorProp
               <select
                 value={dimensions.fabricWidth}
                 onChange={(e) => handleDimensionChange('fabricWidth', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               >
                 <option value="regular">Regular (140cm)</option>
                 <option value="chiffon">Chiffon (280cm)</option>
@@ -162,17 +180,31 @@ export default function CurtainCalculator({ onCalculate }: CurtainCalculatorProp
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Style
+                Rail Type
               </label>
               <select
-                value={dimensions.style}
-                onChange={(e) => handleDimensionChange('style', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                value={dimensions.railType}
+                onChange={(e) => handleDimensionChange('railType', e.target.value as RailType)}
+                className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               >
-                <option value="wave">Wave</option>
-                <option value="pencilPleat">Pencil Pleat</option>
-                <option value="american">American Style</option>
+                <option value="wave">Wave Rail</option>
+                <option value="easyMovable">Easy Movable Track</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Stitching Style
+              </label>
+              <input
+                type="text"
+                value={dimensions.style === 'wave' ? 'Wave Curtain' : 'Pencil Pleat'}
+                disabled
+                className="w-full h-12 text-lg rounded-md border-gray-300 bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400"
+              />
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Style is automatically set based on rail type
+              </p>
             </div>
 
             <div>
@@ -185,7 +217,7 @@ export default function CurtainCalculator({ onCalculate }: CurtainCalculatorProp
                 max={MAX_WINDOWS}
                 value={dimensions.windows}
                 onChange={(e) => handleDimensionChange('windows', Number(e.target.value))}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
           </div>
