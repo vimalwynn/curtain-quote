@@ -131,8 +131,8 @@ const MOTORIZATION_OPTIONS = {
 
 const LINING_OPTIONS = {
   none: { label: 'None', price: 0 },
-  standard: { label: 'Standard', price: 5 },
-  blackout: { label: 'Blackout', price: 8 },
+  standard: { label: 'Standard Lining', price: 800 },
+  blackout: { label: 'Blackout Lining', price: 1500 },
 } as const;
 
 interface NewCurtainForm {
