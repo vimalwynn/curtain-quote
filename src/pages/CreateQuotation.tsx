@@ -7,10 +7,12 @@ import { formatCurrency } from '../utils/formatCurrency';
 import QuotationPreview from '../components/quotations/QuotationPreview';
 import { generatePDF, printDocument } from '../utils/print';
 
-// ... (previous imports and interfaces remain the same)
-
 export default function CreateQuotation() {
-  // ... (previous state and functions remain the same)
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+  const handlePreview = () => {
+    setShowPreviewModal(true);
+  };
 
   return (
     <div className="pb-24"> {/* Add padding to account for fixed footer */}
