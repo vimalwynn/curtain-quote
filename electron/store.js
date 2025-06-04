@@ -19,3 +19,5 @@ const store = new Store({
 });
 
 module.exports = store;
+
+export default store
