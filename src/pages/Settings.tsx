@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Download, Upload, Clock, Save } from 'lucide-react';
 
 // Dropdown Options Configuration
 const TIMEZONE_OPTIONS = [
@@ -70,6 +70,20 @@ const BULK_DISCOUNT_TIERS = [
   { value: 'advanced', label: 'Advanced (Custom tiers)' }
 ];
 
+const AUTO_BACKUP_INTERVALS = [
+  { value: 'disabled', label: 'Disabled' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'monthly', label: 'Monthly' }
+];
+
+const BACKUP_RETENTION = [
+  { value: '5', label: 'Keep last 5 backups' },
+  { value: '10', label: 'Keep last 10 backups' },
+  { value: '30', label: 'Keep last 30 backups' },
+  { value: 'all', label: 'Keep all backups' }
+];
+
 export default function Settings() {
   const [generalSettings, setGeneralSettings] = useState({
     timezone: TIMEZONE_OPTIONS.find(opt => opt.value === 'Asia/Bahrain')?.value,
@@ -98,6 +112,30 @@ export default function Settings() {
     loginAttempts: LOGIN_ATTEMPT_OPTIONS.find(opt => opt.default)?.value || '5'
   });
 
+  const [backup, setBackup] = useState({
+    autoBackup: 'disabled',
+    backupRetention: '10',
+    lastBackup: null as string | null,
+    backupLocation: '',
+    isBackingUp: false
+  });
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    if (window.electronAPI) {
+      const settings = await window.electronAPI.settings.get();
+      if (settings) {
+        setGeneralSettings(prev => ({ ...prev, ...settings.general }));
+        setNotifications(prev => ({ ...prev, ...settings.notifications }));
+        setSecurity(prev => ({ ...prev, ...settings.security }));
+        setBackup(prev => ({ ...prev, ...settings.backup }));
+      }
+    }
+  };
+
   const handleGeneralSettingChange = (key: keyof typeof generalSettings, value: string) => {
     setGeneralSettings(prev => ({
       ...prev,
@@ -117,6 +155,48 @@ export default function Settings() {
       ...prev,
       [key]: value
     }));
+  };
+
+  const handleBackupChange = (key: keyof typeof backup, value: string) => {
+    setBackup(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleManualBackup = async () => {
+    if (!window.electronAPI) return;
+    
+    setBackup(prev => ({ ...prev, isBackingUp: true }));
+    try {
+      const data = await window.electronAPI.data.backup();
+      const timestamp = new Date().toISOString();
+      await window.electronAPI.store.set(`backups/${timestamp}`, data);
+      setBackup(prev => ({ 
+        ...prev, 
+        lastBackup: timestamp,
+        isBackingUp: false 
+      }));
+    } catch (error) {
+      console.error('Backup failed:', error);
+      setBackup(prev => ({ ...prev, isBackingUp: false }));
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    if (!window.electronAPI) return;
+
+    const settings = {
+      general: generalSettings,
+      notifications,
+      security,
+      backup: {
+        ...backup,
+        lastSaved: new Date().toISOString()
+      }
+    };
+
+    await window.electronAPI.settings.save(settings);
   };
 
   return (
@@ -362,6 +442,80 @@ export default function Settings() {
               </form>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Backup Settings</CardTitle>
+              <CardDescription>
+                Configure automatic backups and data retention
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Automatic Backup
+                    </label>
+                    <select
+                      value={backup.autoBackup}
+                      onChange={(e) => handleBackupChange('autoBackup', e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    >
+                      {AUTO_BACKUP_INTERVALS.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Backup Retention
+                    </label>
+                    <select
+                      value={backup.backupRetention}
+                      onChange={(e) => handleBackupChange('backupRetention', e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    >
+                      {BACKUP_RETENTION.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {backup.lastBackup && (
+                    <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                      <Clock className="h-4 w-4 mr-2" />
+                      Last backup: {new Date(backup.lastBackup).toLocaleString()}
+                    </div>
+                  )}
+
+                  <div className="flex space-x-4">
+                    <Button
+                      onClick={handleManualBackup}
+                      type="button"
+                      variant="outline"
+                      leftIcon={<Download className="h-4 w-4" />}
+                      isLoading={backup.isBackingUp}
+                    >
+                      Backup Now
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      leftIcon={<Upload className="h-4 w-4" />}
+                    >
+                      Restore Backup
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
@@ -526,6 +680,7 @@ export default function Settings() {
             <CardContent>
               <dl className="space-y-3 text-sm">
                 <div className="flex justify-between">
+                  
                   <dt className="text-gray-500 dark:text-gray-400">Account Type</dt>
                   <dd className="font-medium text-gray-900 dark:text-white">Administrator</dd>
                 </div>
@@ -548,6 +703,17 @@ export default function Settings() {
               </dl>
             </CardContent>
           </Card>
+        </div>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 py-4 px-6 z-10">
+        <div className="max-w-7xl mx-auto flex justify-end">
+          <Button
+            onClick={handleSaveSettings}
+            leftIcon={<Save className="h-4 w-4" />}
+          >
+            Save All Settings
+          </Button>
         </div>
       </div>
     </div>
