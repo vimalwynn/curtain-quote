@@ -1,66 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { products, fabricOptions } from '../data/mockData';
-import DataTable from '../components/ui/DataTable';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { Package, Plus, Filter, Search, Edit, Trash2, FileText, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 import { formatDate } from '../utils/formatDate';
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  stock: number;
-  requiresSecondaryFabric: boolean;
-  compatibleFabrics: {
-    primary: string[];
-    secondary: string[];
-  };
-}
-
-interface QuotationUsage {
-  id: string;
-  quotationNumber: string;
-  customerName: string;
-  date: string;
-  quantity: number;
-  status: string;
-}
+import { getProducts, getProductQuotations, updateProduct, deleteProduct, type Product, type QuotationUsage } from '../utils/supabase';
+import { fabricOptions } from '../data/mockData';
 
 export default function Products() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [productList, setProductList] = useState<Product[]>(products);
+  const [productList, setProductList] = useState<Product[]>([]);
+  const [quotationHistory, setQuotationHistory] = useState<Record<string, QuotationUsage[]>>({});
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  const categories = Array.from(new Set(products.map(p => p.category)));
+  const categories = Array.from(new Set(productList.map(p => p.category)));
 
-  // Mock quotation usage data
-  const mockQuotationUsage: Record<string, QuotationUsage[]> = {
-    '1': [
-      {
-        id: '1',
-        quotationNumber: 'QT-2024-001',
-        customerName: 'Ahmed Hassan',
-        date: '2024-03-15',
-        quantity: 25,
-        status: 'Accepted'
-      },
-      {
-        id: '2',
-        quotationNumber: 'QT-2024-002',
-        customerName: 'Sara Ali',
-        date: '2024-03-10',
-        quantity: 15,
-        status: 'Pending'
-      }
-    ]
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      setIsLoading(true);
+      const products = await getProducts();
+      setProductList(products);
+
+      // Load quotation history for each product
+      const history: Record<string, QuotationUsage[]> = {};
+      await Promise.all(
+        products.map(async (product) => {
+          history[product.id] = await getProductQuotations(product.id);
+        })
+      );
+      setQuotationHistory(history);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load products');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const filteredProducts = productList.filter(product => {
@@ -89,25 +73,50 @@ export default function Products() {
     navigate(`/quotations/create?productId=${product.id}`);
   };
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = async (product: Product) => {
     setEditingProduct({ ...product });
     setShowEditModal(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      setProductList(productList.filter(p => p.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    try {
+      await deleteProduct(id);
+      setProductList(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete product');
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingProduct) return;
-    setProductList(productList.map(p => 
-      p.id === editingProduct.id ? editingProduct : p
-    ));
-    setShowEditModal(false);
-    setEditingProduct(null);
+
+    try {
+      const updated = await updateProduct(editingProduct.id, editingProduct);
+      setProductList(prev => prev.map(p => p.id === updated.id ? updated : p));
+      setShowEditModal(false);
+      setEditingProduct(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update product');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -150,7 +159,7 @@ export default function Products() {
       <div className="space-y-6">
         {filteredProducts.map(product => {
           const { primaryFabrics, secondaryFabrics } = getCompatibleFabrics(product);
-          const quotationHistory = mockQuotationUsage[product.id] || [];
+          const productQuotations = quotationHistory[product.id] || [];
 
           return (
             <Card key={product.id} className="overflow-hidden">
@@ -268,9 +277,9 @@ export default function Products() {
 
                 <div className="py-4">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Recent Quotations</h3>
-                  {quotationHistory.length > 0 ? (
+                  {productQuotations.length > 0 ? (
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {quotationHistory.map(quote => (
+                      {productQuotations.map(quote => (
                         <div key={quote.id} className="py-3 flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-gray-900 dark:text-white">
