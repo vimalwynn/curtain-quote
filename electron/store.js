@@ -1,23 +1,28 @@
-const Store = require('electron-store');
+import Store from 'electron-store';
 
 const store = new Store({
-  name: 'app-data', // Name of the storage file
+  name: 'app-data',
   defaults: {
     settings: {
       theme: 'light',
       currency: 'BHD',
       language: 'en',
-      taxRate: 0.10
+      taxRate: 0.10,
+      measurementUnit: 'metric',
+      dateFormat: 'DD/MM/YYYY',
+      quoteValidity: 30,
+      bulkDiscounts: 'basic'
     },
     recentQuotations: [],
     customerDatabase: [],
-    productCatalog: []
+    productCatalog: [],
+    fabricLibrary: [],
+    templates: []
   },
-  // Encrypt sensitive data
   encryptionKey: 'your-encryption-key',
-  clearInvalidConfig: true
+  clearInvalidConfig: true,
+  // Configure file location
+  cwd: 'storage'
 });
 
-module.exports = store;
-
-export default store
+export default store;

@@ -57,7 +57,11 @@ ipcMain.handle('electron-store-delete', async (_, key) => {
 // Handle specific data operations
 ipcMain.handle('save-quotation', async (_, quotation) => {
   const quotations = store.get('recentQuotations') || [];
-  quotations.unshift(quotation);
+  quotations.unshift({
+    ...quotation,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
   store.set('recentQuotations', quotations.slice(0, 100)); // Keep last 100 quotations
   return true;
 });
@@ -71,9 +75,16 @@ ipcMain.handle('save-customer', async (_, customer) => {
   const existingIndex = customers.findIndex(c => c.id === customer.id);
   
   if (existingIndex >= 0) {
-    customers[existingIndex] = customer;
+    customers[existingIndex] = {
+      ...customer,
+      updatedAt: new Date().toISOString()
+    };
   } else {
-    customers.push(customer);
+    customers.push({
+      ...customer,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
   }
   
   store.set('customerDatabase', customers);
@@ -91,4 +102,32 @@ ipcMain.handle('save-settings', async (_, settings) => {
 
 ipcMain.handle('get-settings', async () => {
   return store.get('settings');
+});
+
+ipcMain.handle('backup-data', async () => {
+  const data = {
+    settings: store.get('settings'),
+    quotations: store.get('recentQuotations'),
+    customers: store.get('customerDatabase'),
+    products: store.get('productCatalog'),
+    fabrics: store.get('fabricLibrary'),
+    templates: store.get('templates'),
+    exportedAt: new Date().toISOString()
+  };
+  return data;
+});
+
+ipcMain.handle('restore-data', async (_, data) => {
+  try {
+    store.set('settings', data.settings);
+    store.set('recentQuotations', data.quotations);
+    store.set('customerDatabase', data.customers);
+    store.set('productCatalog', data.products);
+    store.set('fabricLibrary', data.fabrics);
+    store.set('templates', data.templates);
+    return true;
+  } catch (error) {
+    console.error('Restore failed:', error);
+    return false;
+  }
 });
