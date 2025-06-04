@@ -9,40 +9,34 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export interface Quotation {
+export interface Product {
   id: string;
-  number: string;
-  date: string;
-  customer_name: string;
-  customer_email: string | null;
-  customer_phone: string | null;
-  customer_address: string | null;
-  items: any[];
-  subtotal: number;
-  tax: number;
-  total: number;
-  status: 'Draft' | 'Sent' | 'Accepted' | 'Declined';
-  valid_until: string;
-  notes: string | null;
+  name: string;
+  category: string;
+  price: number;
+  stock: number;
+  requiresSecondaryFabric: boolean;
+  compatibleFabrics: {
+    primary: string[];
+    secondary: string[];
+  };
   created_at: string;
   updated_at: string;
-  user_id: string;
 }
 
-export async function saveQuotation(quotationData: Omit<Quotation, 'id' | 'created_at' | 'updated_at' | 'user_id'>) {
-  const { data, error } = await supabase
-    .from('quotations')
-    .insert([quotationData])
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export interface QuotationUsage {
+  id: string;
+  quotation_number: string;
+  customer_name: string;
+  date: string;
+  quantity: number;
+  status: string;
+  product_id: string;
 }
 
-export async function getQuotations() {
+export async function getProducts() {
   const { data, error } = await supabase
-    .from('quotations')
+    .from('products')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -50,20 +44,37 @@ export async function getQuotations() {
   return data;
 }
 
-export async function getQuotationById(id: string) {
+export async function getProductQuotations(productId: string) {
   const { data, error } = await supabase
     .from('quotations')
-    .select('*')
-    .eq('id', id)
-    .single();
+    .select(`
+      id,
+      number as quotation_number,
+      customer_name,
+      date,
+      items,
+      status
+    `)
+    .eq('status', 'active')
+    .contains('items', [{ product_id: productId }])
+    .order('date', { ascending: false })
+    .limit(5);
 
   if (error) throw error;
-  return data;
+
+  return data.map(quotation => ({
+    id: quotation.id,
+    quotation_number: quotation.quotation_number,
+    customer_name: quotation.customer_name,
+    date: quotation.date,
+    quantity: quotation.items.find((item: any) => item.product_id === productId)?.quantity || 0,
+    status: quotation.status
+  }));
 }
 
-export async function updateQuotation(id: string, updates: Partial<Quotation>) {
+export async function updateProduct(id: string, updates: Partial<Product>) {
   const { data, error } = await supabase
-    .from('quotations')
+    .from('products')
     .update(updates)
     .eq('id', id)
     .select()
@@ -73,9 +84,9 @@ export async function updateQuotation(id: string, updates: Partial<Quotation>) {
   return data;
 }
 
-export async function deleteQuotation(id: string) {
+export async function deleteProduct(id: string) {
   const { error } = await supabase
-    .from('quotations')
+    .from('products')
     .delete()
     .eq('id', id);
 
