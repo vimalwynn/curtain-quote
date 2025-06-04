@@ -3,6 +3,7 @@ import { join } from 'path';
 import store from './store';
 import notificationManager from './notificationManager';
 import updater from './updater';
+import dataManager from './dataManager';
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -33,6 +34,11 @@ app.whenReady().then(() => {
     updater.initialize();
   }
 
+  // Check for offline data to sync periodically
+  setInterval(() => {
+    dataManager.syncOfflineData();
+  }, 5 * 60 * 1000); // Every 5 minutes
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -46,32 +52,13 @@ app.on('window-all-closed', () => {
   }
 });
 
-// Store operations
-ipcMain.handle('electron-store-get', async (_, key) => {
-  return store.get(key);
+// Data operations
+ipcMain.handle('get-data', async (_, table, query) => {
+  return dataManager.getData(table, query);
 });
 
-ipcMain.handle('electron-store-set', async (_, key, value) => {
-  store.set(key, value);
-  return true;
-});
-
-ipcMain.handle('electron-store-delete', async (_, key) => {
-  store.delete(key);
-  return true;
-});
-
-// Update operations
-ipcMain.handle('check-for-updates', async () => {
-  return updater.checkForUpdates();
-});
-
-ipcMain.handle('download-update', async () => {
-  return updater.downloadUpdate();
-});
-
-ipcMain.handle('install-update', () => {
-  updater.installUpdate();
+ipcMain.handle('save-data', async (_, table, data) => {
+  return dataManager.saveData(table, data);
 });
 
 // Rest of the existing IPC handlers...

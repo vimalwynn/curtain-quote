@@ -1,6 +1,10 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  data: {
+    get: (table, query) => ipcRenderer.invoke('get-data', table, query),
+    save: (table, data) => ipcRenderer.invoke('save-data', table, data),
+  },
   store: {
     get: (key) => ipcRenderer.invoke('electron-store-get', key),
     set: (key, value) => ipcRenderer.invoke('electron-store-set', key, value),
@@ -17,5 +21,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getUnread: () => ipcRenderer.invoke('get-unread-notifications'),
     markAsRead: (id) => ipcRenderer.invoke('mark-notification-read', id),
   },
-  // Rest of the existing API...
 });
