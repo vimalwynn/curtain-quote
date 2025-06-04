@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { products } from '../data/mockData';
+import { products, fabricOptions } from '../data/mockData';
 import DataTable from '../components/ui/DataTable';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import { Package, Plus, Filter, Search, Star, MoreHorizontal, Edit, Trash2, Save, FileText } from 'lucide-react';
+import { Package, Plus, Filter, Search, Edit, Trash2, FileText, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
+import { formatDate } from '../utils/formatDate';
 
 interface Product {
   id: string;
@@ -13,7 +15,20 @@ interface Product {
   category: string;
   price: number;
   stock: number;
-  rating: number;
+  requiresSecondaryFabric: boolean;
+  compatibleFabrics: {
+    primary: string[];
+    secondary: string[];
+  };
+}
+
+interface QuotationUsage {
+  id: string;
+  quotationNumber: string;
+  customerName: string;
+  date: string;
+  quantity: number;
+  status: string;
 }
 
 export default function Products() {
@@ -26,6 +41,28 @@ export default function Products() {
   
   const categories = Array.from(new Set(products.map(p => p.category)));
 
+  // Mock quotation usage data
+  const mockQuotationUsage: Record<string, QuotationUsage[]> = {
+    '1': [
+      {
+        id: '1',
+        quotationNumber: 'QT-2024-001',
+        customerName: 'Ahmed Hassan',
+        date: '2024-03-15',
+        quantity: 25,
+        status: 'Accepted'
+      },
+      {
+        id: '2',
+        quotationNumber: 'QT-2024-002',
+        customerName: 'Sara Ali',
+        date: '2024-03-10',
+        quantity: 15,
+        status: 'Pending'
+      }
+    ]
+  };
+
   const filteredProducts = productList.filter(product => {
     const matchesSearch = 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -35,6 +72,18 @@ export default function Products() {
     
     return matchesSearch && matchesCategory;
   });
+
+  const getCompatibleFabrics = (product: Product) => {
+    const primaryFabrics = product.compatibleFabrics.primary
+      .map(id => fabricOptions.find(f => f.id === id))
+      .filter(f => f !== undefined);
+    
+    const secondaryFabrics = product.compatibleFabrics.secondary
+      .map(id => fabricOptions.find(f => f.id === id))
+      .filter(f => f !== undefined);
+
+    return { primaryFabrics, secondaryFabrics };
+  };
 
   const handleCreateQuote = (product: Product) => {
     navigate(`/quotations/create?productId=${product.id}`);
@@ -53,129 +102,12 @@ export default function Products() {
 
   const handleSave = () => {
     if (!editingProduct) return;
-
     setProductList(productList.map(p => 
       p.id === editingProduct.id ? editingProduct : p
     ));
     setShowEditModal(false);
     setEditingProduct(null);
   };
-
-  const renderStars = (rating: number) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <Star key={`full-${i}`} className="h-4 w-4 fill-amber-400 text-amber-400" />
-      );
-    }
-    
-    if (hasHalfStar) {
-      stars.push(
-        <Star key="half\" className="h-4 w-4 text-amber-400" />
-      );
-    }
-    
-    const emptyStars = 5 - stars.length;
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <Star key={`empty-${i}`} className="h-4 w-4 text-gray-300 dark:text-gray-600" />
-      );
-    }
-    
-    return (
-      <div className="flex">
-        {stars}
-        <span className="ml-1 text-gray-600 dark:text-gray-400">{rating.toFixed(1)}</span>
-      </div>
-    );
-  };
-
-  const columns = [
-    { 
-      key: 'name', 
-      header: 'Product', 
-      sortable: true,
-      render: (product: Product) => (
-        <button
-          onClick={() => handleCreateQuote(product)}
-          className="flex items-center hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-md transition-colors w-full text-left"
-        >
-          <div className="h-10 w-10 flex-shrink-0 rounded-md bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3">
-            <Package className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-          </div>
-          <div>
-            <div className="font-medium text-gray-900 dark:text-white">{product.name}</div>
-            <div className="text-gray-500 dark:text-gray-400 text-xs">{product.category}</div>
-          </div>
-        </button>
-      )
-    },
-    { 
-      key: 'price', 
-      header: 'Price', 
-      sortable: true,
-      render: (product: Product) => (
-        <span className="font-medium text-gray-900 dark:text-white">
-          {formatCurrency(product.price)}
-        </span>
-      )
-    },
-    { 
-      key: 'stock', 
-      header: 'Stock', 
-      sortable: true,
-      render: (product: Product) => (
-        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-          product.stock > 20
-            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-            : product.stock > 10
-            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-        }`}>
-          {product.stock} units
-        </span>
-      )
-    },
-    { 
-      key: 'rating', 
-      header: 'Rating', 
-      sortable: true,
-      render: (product: Product) => renderStars(product.rating)
-    },
-    { 
-      key: 'actions', 
-      header: 'Actions',
-      render: (product: Product) => (
-        <div className="flex space-x-2">
-          <button 
-            className="rounded-md p-1 text-gray-500 hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
-            onClick={() => handleCreateQuote(product)}
-            title="Create Quote"
-          >
-            <FileText className="h-4 w-4" />
-          </button>
-          <button 
-            className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-            onClick={() => handleEdit(product)}
-          >
-            <Edit className="h-4 w-4" />
-          </button>
-          <button 
-            className="rounded-md p-1 text-gray-500 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900/30 dark:hover:text-red-400"
-            onClick={() => handleDelete(product.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-          <button className="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-300">
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
-        </div>
-      )
-    }
-  ];
 
   return (
     <div className="space-y-6">
@@ -186,42 +118,198 @@ export default function Products() {
         </Button>
       </div>
 
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full sm:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-10 w-full rounded-md border border-gray-300 bg-white pl-10 pr-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button variant="outline" leftIcon={<Filter className="h-4 w-4" />}>
-              Filter
-            </Button>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="all">All Categories</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-          </div>
+      <div className="flex gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-10 w-full rounded-md border border-gray-300 bg-white pl-10 pr-4 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500"
+          />
         </div>
         
-        <DataTable
-          columns={columns}
-          data={filteredProducts}
-          keyExtractor={(product) => product.id}
-          zebra={true}
-        />
+        <div className="flex gap-2">
+          <Button variant="outline" leftIcon={<Filter className="h-4 w-4" />}>
+            Filter
+          </Button>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500"
+          >
+            <option value="all">All Categories</option>
+            {categories.map(category => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        {filteredProducts.map(product => {
+          const { primaryFabrics, secondaryFabrics } = getCompatibleFabrics(product);
+          const quotationHistory = mockQuotationUsage[product.id] || [];
+
+          return (
+            <Card key={product.id} className="overflow-hidden">
+              <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 flex-shrink-0 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <Package className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl">{product.name}</CardTitle>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{product.category}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      leftIcon={<FileText className="h-4 w-4" />}
+                      onClick={() => handleCreateQuote(product)}
+                    >
+                      Create Quote
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      leftIcon={<Edit className="h-4 w-4" />}
+                      onClick={() => handleEdit(product)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      leftIcon={<Trash2 className="h-4 w-4" />}
+                      onClick={() => handleDelete(product.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="divide-y divide-gray-200 dark:divide-gray-700">
+                <div className="py-4 grid grid-cols-3 gap-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Price</h3>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {formatCurrency(product.price)}
+                    </p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Stock</h3>
+                    <p className={`inline-flex rounded-full px-2 py-1 text-sm font-medium ${
+                      product.stock > 20
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : product.stock > 10
+                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                    }`}>
+                      {product.stock} units
+                    </p>
+                  </div>
+                </div>
+
+                <div className="py-4">
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Compatible Fabrics</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Primary Fabrics</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {primaryFabrics.map(fabric => (
+                          <div
+                            key={fabric.id}
+                            className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 p-2"
+                          >
+                            <img
+                              src={fabric.image}
+                              alt={fabric.name}
+                              className="h-8 w-8 rounded object-cover"
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{fabric.name}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{fabric.code}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {product.requiresSecondaryFabric && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Secondary Fabrics</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {secondaryFabrics.map(fabric => (
+                            <div
+                              key={fabric.id}
+                              className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 p-2"
+                            >
+                              <img
+                                src={fabric.image}
+                                alt={fabric.name}
+                                className="h-8 w-8 rounded object-cover"
+                              />
+                              <div>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">{fabric.name}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{fabric.code}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="py-4">
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Recent Quotations</h3>
+                  {quotationHistory.length > 0 ? (
+                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {quotationHistory.map(quote => (
+                        <div key={quote.id} className="py-3 flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {quote.quotationNumber}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {quote.customerName} • {formatDate(quote.date)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Quantity: {quote.quantity}
+                            </p>
+                            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                              quote.status === 'Accepted'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                            }`}>
+                              {quote.status}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                              <ArrowRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No quotations yet</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <Modal
@@ -286,21 +374,6 @@ export default function Products() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Rating
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="5"
-                value={editingProduct.rating}
-                onChange={(e) => setEditingProduct({ ...editingProduct, rating: parseFloat(e.target.value) })}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              />
-            </div>
-
             <div className="flex justify-end gap-2 mt-6">
               <Button
                 variant="outline"
@@ -311,10 +384,7 @@ export default function Products() {
               >
                 Cancel
               </Button>
-              <Button
-                leftIcon={<Save className="h-4 w-4" />}
-                onClick={handleSave}
-              >
+              <Button onClick={handleSave}>
                 Save Changes
               </Button>
             </div>
