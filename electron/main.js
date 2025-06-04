@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { join } from 'path';
 import store from './store';
+import notificationManager from './notificationManager';
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -13,18 +14,18 @@ function createWindow() {
     }
   });
 
-  // In development, load from Vite dev server
   if (process.env.NODE_ENV === 'development') {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    // In production, load from built files
     mainWindow.loadFile(join(__dirname, '../dist/index.html'));
   }
+
+  return mainWindow;
 }
 
 app.whenReady().then(() => {
-  createWindow();
+  const mainWindow = createWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -39,7 +40,7 @@ app.on('window-all-closed', () => {
   }
 });
 
-// Handle store operations
+// Store operations
 ipcMain.handle('electron-store-get', async (_, key) => {
   return store.get(key);
 });
@@ -54,7 +55,24 @@ ipcMain.handle('electron-store-delete', async (_, key) => {
   return true;
 });
 
-// Handle specific data operations
+// Notification operations
+ipcMain.handle('send-notification', async (_, notification) => {
+  return notificationManager.send(notification);
+});
+
+ipcMain.handle('get-notifications', async () => {
+  return notificationManager.getAll();
+});
+
+ipcMain.handle('mark-notification-read', async (_, notificationId) => {
+  return notificationManager.markAsRead(notificationId);
+});
+
+ipcMain.handle('get-unread-notifications', async () => {
+  return notificationManager.getUnread();
+});
+
+// Data operations
 ipcMain.handle('save-quotation', async (_, quotation) => {
   const quotations = store.get('recentQuotations') || [];
   quotations.unshift({
@@ -62,7 +80,15 @@ ipcMain.handle('save-quotation', async (_, quotation) => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   });
-  store.set('recentQuotations', quotations.slice(0, 100)); // Keep last 100 quotations
+  store.set('recentQuotations', quotations.slice(0, 100));
+  
+  // Send notification to other users
+  notificationManager.send({
+    title: 'New Quotation Created',
+    body: `Quotation ${quotation.number} has been created`,
+    data: { type: 'quotation', id: quotation.id }
+  });
+  
   return true;
 });
 
