@@ -5,5 +5,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     get: (key) => ipcRenderer.invoke('electron-store-get', key),
     set: (key, value) => ipcRenderer.invoke('electron-store-set', key, value),
     delete: (key) => ipcRenderer.invoke('electron-store-delete', key),
+  },
+  quotations: {
+    save: (quotation) => ipcRenderer.invoke('save-quotation', quotation),
+    getAll: () => ipcRenderer.invoke('get-quotations'),
+  },
+  customers: {
+    save: (customer) => ipcRenderer.invoke('save-customer', customer),
+    getAll: () => ipcRenderer.invoke('get-customers'),
+  },
+  settings: {
+    save: (settings) => ipcRenderer.invoke('save-settings', settings),
+    get: () => ipcRenderer.invoke('get-settings'),
   }
 });
