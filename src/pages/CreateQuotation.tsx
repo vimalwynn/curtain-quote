@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import { Save, FileText, Plus, AlertCircle, Calculator } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
-import CurtainSelector from '../components/quotations/CurtainSelector';
-import { getProducts, type Product } from '../utils/supabase';
 
 interface CurtainOption {
   id: string;
@@ -190,27 +188,9 @@ export default function CreateQuotation() {
     processingOptions: [],
   });
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [customRailOption, setCustomRailOption] = useState('');
   const [isCalculating, setIsCalculating] = useState(false);
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  const loadProducts = async () => {
-    try {
-      setIsLoading(true);
-      const data = await getProducts();
-      setProducts(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load products');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleCustomRailAdd = () => {
     if (customRailOption.trim()) {
@@ -275,7 +255,7 @@ export default function CreateQuotation() {
       (treatment.width / 100) * (treatment.height / 100) * treatment.quantity;
     
     const motorizationCost = MOTORIZATION_OPTIONS[treatment.motorization].price * treatment.quantity;
-    const installationCost = 25 * treatment.quantity;
+    const installationCost = 25 * treatment.quantity; // Base installation cost
     
     const subtotal = fabricCost + liningCost + motorizationCost + installationCost;
     const vat = subtotal * 0.10;
@@ -384,22 +364,6 @@ export default function CreateQuotation() {
   };
 
   const costs = calculateCosts();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg">
-        {error}
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col min-h-screen pb-[4.5rem] md:pb-[4rem]">
@@ -527,22 +491,260 @@ export default function CreateQuotation() {
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <CurtainSelector
-            label="Primary"
-            selectedId={treatment.primaryFabric}
-            products={products}
-            onChange={(id) => setTreatment(prev => ({ ...prev, primaryFabric: id }))}
-          />
+        <Card>
+          <CardHeader>
+            <CardTitle>Rail Configuration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Primary Rail</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Rail Type *
+                    </label>
+                    <select
+                      value={treatment.primaryRail.type}
+                      onChange={(e) => handleRailTypeChange('primary', e.target.value)}
+                      className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      required
+                    >
+                      <option value="none">None</option>
+                      <option value="wave">Wave Track</option>
+                      <option value="easyMovable">Easy Movable Track</option>
+                    </select>
+                  </div>
 
-          <CurtainSelector
-            label="Secondary"
-            selectedId={treatment.secondaryFabric}
-            products={products.filter(p => p.compatibleFabrics.secondary.includes(treatment.primaryFabric))}
-            onChange={(id) => setTreatment(prev => ({ ...prev, secondaryFabric: id }))}
-            disabled={!treatment.primaryFabric}
-          />
-        </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Curtain Style
+                    </label>
+                    <input
+                      type="text"
+                      value={treatment.primaryRail.style}
+                      className="w-full h-12 text-lg rounded-md border-gray-300 bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400"
+                      disabled
+                    />
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      Style is automatically set based on rail type
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Secondary Rail</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Rail Type
+                    </label>
+                    <select
+                      value={treatment.secondaryRail.type}
+                      onChange={(e) => handleRailTypeChange('secondary', e.target.value)}
+                      className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    >
+                      <option value="none">None</option>
+                      <option value="wave">Wave Track</option>
+                      <option value="easyMovable">Easy Movable Track</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Curtain Style
+                    </label>
+                    <input
+                      type="text"
+                      value={treatment.secondaryRail.style}
+                      className="w-full h-12 text-lg rounded-md border-gray-300 bg-gray-100 dark:bg-gray-700 cursor-not-allowed text-gray-500 dark:text-gray-400"
+                      disabled
+                    />
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      Style is automatically set based on rail type
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-end gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Add Custom Rail Option
+                  </label>
+                  <input
+                    type="text"
+                    value={customRailOption}
+                    onChange={(e) => setCustomRailOption(e.target.value)}
+                    placeholder="Enter custom rail type"
+                    className="w-full h-12 text-lg rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+                <Button onClick={handleCustomRailAdd} leftIcon={<Plus className="h-4 w-4" />}>
+                  Add Option
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Material Selection</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Primary Curtain *
+                  </label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    leftIcon={<Plus className="h-4 w-4" />}
+                    onClick={() => handleAddNewCurtain('primary')}
+                  >
+                    Add New
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  {curtainOptions.map(curtain => (
+                    <label
+                      key={curtain.id}
+                      className={`relative flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
+                        treatment.primaryFabric === curtain.id
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="primaryFabric"
+                        value={curtain.id}
+                        checked={treatment.primaryFabric === curtain.id}
+                        onChange={(e) => setTreatment(prev => ({ ...prev, primaryFabric: e.target.value }))}
+                        className="sr-only"
+                      />
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={curtain.image}
+                          alt={curtain.name}
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">{curtain.name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Code: {curtain.code}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {formatCurrency(curtain.price)}/meter
+                          </p>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                {treatment.primaryFabric && (
+                  <div className="mt-4 space-y-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">Processing Options</h4>
+                    <div className="space-y-2">
+                      {curtainOptions
+                        .find(c => c.id === treatment.primaryFabric)
+                        ?.processingOptions.map(option => (
+                          <label key={option.id} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={treatment.primaryProcessing.includes(option.id)}
+                              onChange={(e) => handleProcessingChange('primary', option.id, e.target.checked)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700"
+                            />
+                            <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                              {option.name} {option.price > 0 && `(+${formatCurrency(option.price)})`}
+                            </span>
+                          </label>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Secondary Curtain
+                  </label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    leftIcon={<Plus className="h-4 w-4" />}
+                    onClick={() => handleAddNewCurtain('secondary')}
+                  >
+                    Add New
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  {curtainOptions.map(curtain => (
+                    <label
+                      key={curtain.id}
+                      className={`relative flex items-center p-4 border rounded-lg cursor-pointer transition-colors ${
+                        treatment.secondaryFabric === curtain.id
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="secondaryFabric"
+                        value={curtain.id}
+                        checked={treatment.secondaryFabric === curtain.id}
+                        onChange={(e) => setTreatment(prev => ({ ...prev, secondaryFabric: e.target.value }))}
+                        className="sr-only"
+                      />
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={curtain.image}
+                          alt={curtain.name}
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">{curtain.name}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Code: {curtain.code}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {formatCurrency(curtain.price)}/meter
+                          </p>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                {treatment.secondaryFabric && (
+                  <div className="mt-4 space-y-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">Processing Options</h4>
+                    <div className="space-y-2">
+                      {curtainOptions
+                        .find(c => c.id === treatment.secondaryFabric)
+                        ?.processingOptions.map(option => (
+                          <label key={option.id} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={treatment.secondaryProcessing.includes(option.id)}
+                              onChange={(e) => handleProcessingChange('secondary', option.id, e.target.checked)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700"
+                            />
+                            <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                              {option.name} {option.price > 0 && `(+${formatCurrency(option.price)})`}
+                            </span>
+                          </label>
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
