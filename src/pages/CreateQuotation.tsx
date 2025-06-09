@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import { Save, FileText, Plus, AlertCircle, Calculator } from 'lucide-react';
+import QuotationPreview from '../components/quotations/QuotationPreview';
+import { Save, FileText, Plus, AlertCircle, Calculator, Eye } from 'lucide-react';
 import { formatCurrency } from '../utils/formatCurrency';
 
 interface CurtainOption {
@@ -176,6 +177,7 @@ export default function CreateQuotation() {
 
   const [curtainOptions, setCurtainOptions] = useState<CurtainOption[]>(initialCurtainOptions);
   const [showNewCurtainModal, setShowNewCurtainModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [newCurtainType, setNewCurtainType] = useState<'primary' | 'secondary'>('primary');
   const [newCurtainForm, setNewCurtainForm] = useState<NewCurtainForm>({
     name: '',
@@ -359,8 +361,123 @@ export default function CreateQuotation() {
     // Save logic here
   };
 
+  const generateQuotationNumber = () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `QT-${year}${month}${day}-${random}`;
+  };
+
+  const generateQuotationData = () => {
+    const costs = calculateCosts();
+    const primaryFabric = curtainOptions.find(f => f.id === treatment.primaryFabric);
+    const secondaryFabric = curtainOptions.find(f => f.id === treatment.secondaryFabric);
+    
+    const items = [];
+    
+    // Add primary fabric item
+    if (primaryFabric) {
+      const primaryProcessingNames = treatment.primaryProcessing
+        .map(id => primaryFabric.processingOptions.find(p => p.id === id)?.name)
+        .filter(Boolean);
+      
+      items.push({
+        id: '1',
+        description: `${treatment.identifier} - ${primaryFabric.name} (${primaryFabric.code})${
+          primaryProcessingNames.length > 0 ? ` with ${primaryProcessingNames.join(', ')}` : ''
+        }`,
+        quantity: treatment.quantity,
+        unitPrice: costs.breakdown.primary,
+        total: costs.breakdown.primary * treatment.quantity
+      });
+    }
+    
+    // Add secondary fabric item if exists
+    if (secondaryFabric) {
+      const secondaryProcessingNames = treatment.secondaryProcessing
+        .map(id => secondaryFabric.processingOptions.find(p => p.id === id)?.name)
+        .filter(Boolean);
+      
+      items.push({
+        id: '2',
+        description: `${treatment.identifier} - ${secondaryFabric.name} (${secondaryFabric.code})${
+          secondaryProcessingNames.length > 0 ? ` with ${secondaryProcessingNames.join(', ')}` : ''
+        }`,
+        quantity: treatment.quantity,
+        unitPrice: costs.breakdown.secondary,
+        total: costs.breakdown.secondary * treatment.quantity
+      });
+    }
+    
+    // Add lining if selected
+    if (treatment.lining !== 'none') {
+      items.push({
+        id: '3',
+        description: `${LINING_OPTIONS[treatment.lining].label} - ${treatment.identifier}`,
+        quantity: treatment.quantity,
+        unitPrice: costs.liningCost / treatment.quantity,
+        total: costs.liningCost
+      });
+    }
+    
+    // Add motorization if selected
+    if (treatment.motorization !== 'manual') {
+      items.push({
+        id: '4',
+        description: `${MOTORIZATION_OPTIONS[treatment.motorization].label} - ${treatment.identifier}`,
+        quantity: treatment.quantity,
+        unitPrice: MOTORIZATION_OPTIONS[treatment.motorization].price,
+        total: costs.motorizationCost
+      });
+    }
+    
+    // Add installation
+    items.push({
+      id: '5',
+      description: `Installation Service - ${treatment.identifier}`,
+      quantity: treatment.quantity,
+      unitPrice: 25,
+      total: costs.installationCost
+    });
+
+    const validUntil = new Date();
+    validUntil.setDate(validUntil.getDate() + 30);
+
+    return {
+      number: generateQuotationNumber(),
+      date: new Date().toISOString(),
+      validUntil: validUntil.toISOString(),
+      status: 'Draft' as const,
+      customer: {
+        name: customerDetails.fullName || 'Customer Name',
+        company: '',
+        address: customerDetails.address || 'Customer Address',
+        phone: customerDetails.contactNumber || 'Phone Number',
+        email: customerDetails.email || 'Email Address'
+      },
+      items,
+      subtotal: costs.subtotal,
+      tax: costs.vat,
+      total: costs.total,
+      notes: treatment.specialInstructions || undefined,
+      terms: [
+        'Quote valid for 30 days from date of issue',
+        'Installation included in the quoted price',
+        'Payment terms: 50% deposit, 50% on completion',
+        'Delivery time: 2-3 weeks from order confirmation'
+      ]
+    };
+  };
+
   const handlePreview = () => {
-    // Preview logic here
+    if (!customerDetails.fullName || !treatment.identifier || !treatment.width || !treatment.height) {
+      setError('Please fill in all required fields before previewing');
+      return;
+    }
+    setError(null);
+    setShowPreviewModal(true);
   };
 
   const costs = calculateCosts();
@@ -873,7 +990,7 @@ export default function CreateQuotation() {
           <div className="flex space-x-4 w-full sm:w-auto">
             <Button
               variant="outline"
-              leftIcon={<FileText className="h-4 w-4" />}
+              leftIcon={<Eye className="h-4 w-4" />}
               onClick={handlePreview}
               className="flex-1 sm:flex-none"
             >
@@ -1001,6 +1118,16 @@ export default function CreateQuotation() {
               Add Curtain
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        title="Quotation Preview"
+      >
+        <div className="max-h-[80vh] overflow-y-auto">
+          <QuotationPreview quotation={generateQuotationData()} />
         </div>
       </Modal>
     </div>
